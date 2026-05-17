@@ -37,6 +37,12 @@ wandb/
 .env
 .env.local
 
+# vast.ai workflow state (instance id, ssh details)
+.vast/
+
+# Session-marker files
+secrets/
+
 # Claude Code local overrides (per-user perms); track the team settings.json.
 .claude/settings.local.json
 .claude/.memory/
