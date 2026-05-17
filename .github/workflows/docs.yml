@@ -1,0 +1,50 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/site/**
+      - .github/workflows/docs.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: docs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: docs-${{ hashFiles('docs/site/mkdocs.yml') }}
+
+      - name: Install MkDocs Material
+        run: |
+          pip install --upgrade pip
+          pip install "mkdocs-material>=9.5" "pymdown-extensions>=10"
+
+      - name: Build site
+        run: mkdocs build -f docs/site/mkdocs.yml --strict --site-dir site_out
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        if: github.ref == 'refs/heads/main'
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: site_out
+          force_orphan: true
