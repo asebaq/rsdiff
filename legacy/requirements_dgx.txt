@@ -18,7 +18,9 @@ torchvision>=0.20.0
 # Use the maintained head; >=1.26 supports modern torch.
 imagen-pytorch>=1.26.0
 
-transformers>=4.44.0
+# imagen-pytorch's t5 helper still uses tokenizer.batch_encode_plus, which was
+# removed in transformers 5.x. Pin <5 until upstream migrates.
+transformers>=4.44.0,<5.0
 accelerate>=0.34.0
 torchmetrics[image]>=1.4.0
 torchsummary
