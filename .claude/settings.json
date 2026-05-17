@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch",
+      "Bash(pytest *)",
+      "Bash(ruff *)",
+      "Bash(python3 *)",
+      "Bash(pip install *)",
+      "Bash(pre-commit *)",
+      "Bash(accelerate *)",
+      "Bash(rsdiff *)",
+      "Bash(./scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git branch*)",
+      "Bash(jq *)",
+      "Bash(ls *)",
+      "Bash(cat *)",
+      "Bash(find *)",
+      "Bash(rg *)",
+      "Bash(tree *)"
+    ]
+  }
+}

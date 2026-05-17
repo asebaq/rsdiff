@@ -1,0 +1,43 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+env/
+.eggs/
+
+# Data, weights, logs
+data/
+datasets/
+checkpoints/
+runs/
+logs/
+outputs/
+generated/
+wandb/
+*.pt
+*.safetensors
+*.ckpt
+*.bin
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Env
+.env
+.env.local
+
+# Claude Code local overrides (per-user perms); track the team settings.json.
+.claude/settings.local.json
+.claude/.memory/
+

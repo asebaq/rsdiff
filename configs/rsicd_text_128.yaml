@@ -1,0 +1,45 @@
+# rsdiff v0 baseline: RSICD text-to-image at 128x128
+# Matches the LR-GDM stage of the thesis (low-res, T5-base, 1000 timesteps).
+# SR stage config lives in rsicd_text_128to256.yaml (to be added).
+
+data:
+  name: rsicd
+  root: data/RSICD_optimal
+  image_size: 128
+  caption_idx: null         # random caption each step
+  num_workers: 4
+
+text_encoder:
+  name: t5-base
+  max_length: 128
+
+model:
+  arch: unet2d_cond
+  sample_size: 128
+  block_out_channels: [128, 256, 256, 512]
+  cross_attention_dim: 768   # t5-base d_model
+
+diffusion:
+  scheduler: ddpm
+  num_train_timesteps: 1000
+  prediction_type: epsilon
+  beta_schedule: scaled_linear
+
+optim:
+  lr: 1.0e-4
+  weight_decay: 0.0
+  warmup_steps: 500
+  max_steps: 200000
+  grad_accum: 1
+  use_ema: true
+  ema_decay: 0.9999
+
+train:
+  seed: 42
+  output_dir: outputs/rsicd_text_128
+  batch_size: 32
+  mixed_precision: bf16
+  log_every: 50
+  sample_every: 1000
+  save_every: 5000
+  gradient_checkpointing: false

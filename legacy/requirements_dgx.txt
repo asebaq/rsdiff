@@ -1,0 +1,33 @@
+# DGX Spark (aarch64, Grace-Blackwell, CUDA 12.4+) pinned deps.
+# Original requirements.txt targeted torch 1.13+cu117 (x86_64) and will NOT work here.
+# Use the NGC PyTorch container 24.10+ OR a clean venv with these pins.
+
+einops>=0.7.0
+tqdm>=4.66.0
+pillow>=10.2.0
+numpy>=1.26.0
+matplotlib>=3.8.0
+
+# torch 2.5+ ships aarch64+sbsa wheels with CUDA 12.4 (works on GB10).
+# Inside NGC container these are preinstalled; outside, use:
+#   pip install --index-url https://download.pytorch.org/whl/cu124 torch torchvision
+torch>=2.5.0
+torchvision>=0.20.0
+
+# Imagen-pytorch 1.1.4 (2022) breaks on torch>=2.1 due to removed APIs.
+# Use the maintained head; >=1.26 supports modern torch.
+imagen-pytorch>=1.26.0
+
+transformers>=4.44.0
+accelerate>=0.34.0
+torchmetrics[image]>=1.4.0
+torchsummary
+tensorboard>=2.17.0
+
+opencv-python>=4.10.0
+pandas>=2.2.0
+scikit-learn>=1.5.0
+nltk>=3.9.0
+
+# Optional, often skipped on aarch64:
+# deepspeed
