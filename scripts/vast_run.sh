@@ -12,12 +12,25 @@
 #   ssh [-- CMD...]       SSH interactive (or run CMD remotely).
 #   rsync                 Push repo to /workspace/rsdiff on instance.
 #   bootstrap             Run scripts/vast_setup.sh --download-rsicd remotely.
-#   run [EPOCHS] [NAME]   Launch training (legacy/run_smoke.sh) via nohup; survives disconnect.
+#   run [EPOCHS] [NAME]   Launch LR training (legacy/run_smoke.sh) via nohup; survives disconnect.
 #                         Default: 10 epochs, LOG_NAME=smoke_lr_gdm. Use 1000 + full_lr_gdm for full run.
+#   run-sr [EPOCHS] [NAME]  Launch SR training (legacy/run_sr.sh, path B) via nohup.
+#                         Default: 1000 epochs, LOG_NAME=full_sr_gdm. Seeds+freezes LR base.
+#                         Env: LR_CKPT overrides the base checkpoint to seed unet 1.
 #   logs [NAME]           Tail logfile.log from legacy/DDPM/logs/<NAME>/ (default smoke_lr_gdm).
 #   gpu                   Show clean nvidia-smi snapshot (vram, util, power, temp).
 #   pull [SUBPATH]        Rsync remote artifacts (ckpt + samples + logs) -> outputs/vast/.
 #                         Default SUBPATH=legacy/DDPM/logs/smoke_lr_gdm.
+#   snapshot [NAME]       One-shot: copy checkpoint.pt -> checkpoint_step{N}.pt.
+#                         Defaults NAME=full_lr_gdm, MAX=20, PRUNE_TO=10.
+#                         Also writes milestones/ckpt_step{N}.pt every 100 epochs.
+#                         Env: SNAP_WATCH=SECONDS spawns nohup watcher loop.
+#                              SNAP_MAX, SNAP_PRUNE_TO, MILESTONE_STEPS override defaults.
+#   pull-milestones [NAME]  Rsync legacy/DDPM/logs/<NAME>/milestones/ -> outputs/vast/.../milestones/.
+#   sample-grid [NAME] [STEP]  Sample 16 test captions from a ckpt on remote.
+#                              Default: latest milestone if any, else checkpoint.pt.
+#                              STEP picks milestones/ckpt_step{STEP}.pt explicitly.
+#                              SR auto-detected for *sr* names (256 cascade); SR=1/0 to force.
 #   destroy               Tear instance down (asks unless FORCE=1). Tip: pull first.
 #   swap OFFER_ID         FORCE-destroy current + launch new offer + wait + rsync + bootstrap.
 #   all [OFFER_ID]        launch -> wait -> rsync -> bootstrap -> run (10-epoch smoke).
@@ -31,7 +44,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "${REPO_ROOT}"
 
 STATE_DIR="${REPO_ROOT}/.vast"
-STATE_FILE="${STATE_DIR}/instance.json"
+# VAST_STATE overrides the state file so a second instance (e.g. FID-gen box) can
+# be managed in parallel without clobbering the training instance's state:
+#   VAST_STATE=fid ./scripts/vast_run.sh launch ...  -> .vast/fid.json
+STATE_FILE="${STATE_DIR}/${VAST_STATE:+${VAST_STATE}.}instance.json"
 mkdir -p "${STATE_DIR}"
 
 IMAGE="${VAST_IMAGE:-pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel}"
@@ -167,7 +183,7 @@ cmd_rsync() {
   host="$(state_get ssh_host)"
   port="$(state_get ssh_port)"
   rsync -avz -e "ssh -p ${port} -o StrictHostKeyChecking=accept-new" \
-    --exclude '.git' --exclude '.venv' --exclude '__pycache__' \
+    --exclude '.git' --exclude '.venv*' --exclude '__pycache__' \
     --exclude 'data/' --exclude 'outputs/' --exclude '.vast/' \
     --exclude '*.safetensors' --exclude '*.pt' --exclude '*.ckpt' \
     --exclude '.env' --exclude '.env.local' --exclude 'secrets/' \
@@ -189,6 +205,19 @@ cmd_run() {
     EPOCHS=${epochs} LOG_NAME=${name} nohup bash legacy/run_smoke.sh \
       > ${REMOTE_ROOT}/outputs/run_${name}_${ts}.log 2>&1 < /dev/null & \
     echo started run pid=\$! name=${name} epochs=${epochs} \
+      stdout_log=outputs/run_${name}_${ts}.log \
+      logger_log=legacy/DDPM/logs/${name}/logfile.log"
+}
+
+cmd_run_sr() {
+  require_state
+  local epochs="${1:-1000}"
+  local name="${2:-full_sr_gdm}"
+  local ts="$(date +%Y%m%d_%H%M%S)"
+  ssh_cmd "mkdir -p ${REMOTE_ROOT}/outputs && cd ${REMOTE_ROOT} && \
+    EPOCHS=${epochs} LOG_NAME=${name} ${LR_CKPT:+LR_CKPT='${LR_CKPT}'} nohup bash legacy/run_sr.sh \
+      > ${REMOTE_ROOT}/outputs/run_${name}_${ts}.log 2>&1 < /dev/null & \
+    echo started SR run pid=\$! name=${name} epochs=${epochs} \
       stdout_log=outputs/run_${name}_${ts}.log \
       logger_log=legacy/DDPM/logs/${name}/logfile.log"
 }
@@ -218,6 +247,20 @@ cmd_gpu() {
   }'
 }
 
+cmd_snapshot() {
+  require_state
+  local name="${1:-full_lr_gdm}"
+  local max="${SNAP_MAX:-20}"
+  local prune_to="${SNAP_PRUNE_TO:-10}"
+  local watch="${SNAP_WATCH:-0}"
+  local logdir="${REMOTE_ROOT}/legacy/DDPM/logs/${name}"
+  if [ "${watch}" -eq 0 ]; then
+    ssh_cmd "bash ${REMOTE_ROOT}/scripts/remote_snapshot.sh '${logdir}' '${max}' '${prune_to}'"
+  else
+    ssh_cmd "nohup bash -c 'while true; do bash ${REMOTE_ROOT}/scripts/remote_snapshot.sh \"${logdir}\" \"${max}\" \"${prune_to}\" 2>&1; sleep ${watch}; done' > ${REMOTE_ROOT}/outputs/snap_watcher_${name}.log 2>&1 < /dev/null & echo started watcher pid=\$! interval=${watch}s max=${max} prune_to=${prune_to} log=outputs/snap_watcher_${name}.log"
+  fi
+}
+
 cmd_pull() {
   require_state
   local sub="${1:-legacy/DDPM/logs/smoke_lr_gdm}"
@@ -229,6 +272,55 @@ cmd_pull() {
   rsync -avz --partial -e "ssh -p ${port} -o StrictHostKeyChecking=accept-new" \
     "root@${host}:${REMOTE_ROOT}/${sub}/" "${dest}/"
   echo "pulled -> ${dest}"
+}
+
+cmd_sample_grid() {
+  require_state
+  local name="${1:-full_lr_gdm}"
+  local step="${2:-}"
+  local n="${SAMPLE_N:-16}"
+  local cols="${SAMPLE_COLS:-4}"
+  local scale="${COND_SCALE:-4.0}"
+  local batch_arg=""
+  [ -n "${SAMPLE_BATCH:-}" ] && batch_arg="--batch ${SAMPLE_BATCH}"
+  local grid_arg=""
+  [ "${NO_GRID:-0}" = "1" ] && grid_arg="--no_grid"
+  local logdir="${REMOTE_ROOT}/legacy/DDPM/logs/${name}"
+  local ckpt_arg=""
+  local out_subdir=""
+  if [ -n "${step}" ]; then
+    ckpt_arg="--ckpt ${logdir}/milestones/ckpt_step${step}.pt"
+    out_subdir="--out_subdir grid_step${step}"
+  fi
+  # Two-unet cascade for SR runs (full_sr_gdm / *_sr_*). Set SR=0 to force base-only.
+  local sr_arg=""
+  case "${SR:-auto}" in
+    1) sr_arg="--sr" ;;
+    0) sr_arg="" ;;
+    *) [[ "${name}" == *sr* ]] && sr_arg="--sr" ;;
+  esac
+  ssh_cmd "cd ${REMOTE_ROOT} && python legacy/DDPM/sample_grid.py \
+    --log_dir ${logdir} \
+    --data_root ${REMOTE_ROOT}/data/RSICD_optimal \
+    --n ${n} --cols ${cols} --cond_scale ${scale} \
+    --split test --device auto \
+    ${batch_arg} ${grid_arg} ${sr_arg} ${ckpt_arg} ${out_subdir}"
+}
+
+cmd_pull_milestones() {
+  require_state
+  local name="${1:-full_lr_gdm}"
+  local host port dest remote_dir
+  host="$(state_get ssh_host)"
+  port="$(state_get ssh_port)"
+  dest="${REPO_ROOT}/outputs/vast/legacy/DDPM/logs/${name}/milestones"
+  remote_dir="${REMOTE_ROOT}/legacy/DDPM/logs/${name}/milestones"
+  mkdir -p "${dest}"
+  ssh_cmd "mkdir -p '${remote_dir}'"
+  rsync -avz --partial -e "ssh -p ${port} -o StrictHostKeyChecking=accept-new" \
+    "root@${host}:${remote_dir}/" "${dest}/"
+  local n; n=$(find "${dest}" -maxdepth 1 -name '*.pt' -type f 2>/dev/null | wc -l | tr -d ' ')
+  echo "milestones local: ${n} files -> ${dest}"
 }
 
 cmd_destroy() {
@@ -279,9 +371,13 @@ case "${sub}" in
   rsync)     cmd_rsync "$@" ;;
   bootstrap) cmd_bootstrap "$@" ;;
   run)       cmd_run "$@" ;;
+  run-sr)    cmd_run_sr "$@" ;;
   logs)      cmd_logs "$@" ;;
   gpu)       cmd_gpu "$@" ;;
   pull)      cmd_pull "$@" ;;
+  pull-milestones) cmd_pull_milestones "$@" ;;
+  sample-grid) cmd_sample_grid "$@" ;;
+  snapshot)  cmd_snapshot "$@" ;;
   destroy)   cmd_destroy "$@" ;;
   swap)      cmd_swap "$@" ;;
   all)       cmd_all "$@" ;;
