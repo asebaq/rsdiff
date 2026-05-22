@@ -7,6 +7,7 @@ v0 plan:
                     against dataset class labels
 """
 
+from rsdiff.eval.fid import FIDResult, fid
 from rsdiff.eval.zeroshot_oa import zeroshot_oa
 
-__all__ = ["zeroshot_oa"]
+__all__ = ["fid", "FIDResult", "zeroshot_oa"]

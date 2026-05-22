@@ -40,8 +40,24 @@ def cmd_eval(args: argparse.Namespace) -> int:
     if "zeroshot_oa" in args.metric:
         res = zeroshot_oa(csv, images_dir)
         print(f"zeroshot_oa: {res.accuracy:.2f}%  ({res.correct}/{res.total}, missing={res.missing})")
-    if "fid" in args.metric or "clip_score" in args.metric:
-        print("fid / clip_score not implemented yet — pending v0 scope lock.")
+    if "fid" in args.metric:
+        from rsdiff.eval import fid as fid_metric
+
+        res = fid_metric(
+            gen_dir=images_dir,
+            real_csv=csv,
+            real_dir=Path(cfg.data.root) / "RSICD_images",
+            split="test",
+            feature=args.fid_feature,
+            image_size=args.fid_size,
+            max_n=args.max_n,
+        )
+        print(
+            f"fid (feature={res.feature}, size={res.image_size}): {res.fid:.2f}"
+            f"  (real={res.n_real}, gen={res.n_gen})"
+        )
+    if "clip_score" in args.metric:
+        print("clip_score not implemented yet — pending v0 scope lock.")
     return 0
 
 
@@ -69,6 +85,15 @@ def build_parser() -> argparse.ArgumentParser:
         choices=["fid", "clip_score", "zeroshot_oa"],
         default=["zeroshot_oa"],
     )
+    p_eval.add_argument(
+        "--fid-feature",
+        type=int,
+        choices=[64, 192, 768, 2048],
+        default=2048,
+        help="InceptionV3 feature dim. 2048=standard/paper-comparable, 64=thesis snippet.",
+    )
+    p_eval.add_argument("--fid-size", type=int, default=256, help="Resize both sides to this before FID (128=LR, 256=SR/cascade).")
+    p_eval.add_argument("--max-n", type=int, default=None, help="Cap images per side (debug).")
     p_eval.set_defaults(fn=cmd_eval)
 
     return p
