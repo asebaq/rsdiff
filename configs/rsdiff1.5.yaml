@@ -1,0 +1,58 @@
+# rsdiff1.5 — optimized cascade. Lightweight base (the net that actually
+# produced the thesis FID 66.49) + a shrunk SR unet. Optimization, not a fix.
+#
+# base 27.2M + SR 92.7M = 119.9M pipeline (~6× lighter than rsdiff1's 723M).
+# SR shrink: dim_mults deepest 8×→4× (1,2,3,4) + num_resnet_blocks→(2,2,2,2).
+#
+# Risk: narrower deep stage may soften 256² high-freq detail. Validate FID-256
+# against rsdiff1 before declaring "same results".
+
+meta:
+  version: rsdiff1.5
+  reflects: "thesis actual base (27.2M, FID 66.49 lineage) + optimized SR"
+  params_m: 119.9
+  fid_expected: null          # base reproduces LR-128 66.49; 256² cascade TBD
+  fid_measured: null
+  notes: "path B: base seeded+frozen from LR run, train SR only."
+
+data:
+  name: rsicd
+  root: data/RSICD_optimal
+  image_size: 128
+  num_workers: 4
+
+cascade:
+  enabled: true
+  image_sizes: [128, 256]
+  timesteps: 1000
+  cond_drop_prob: 0.1
+  text_encoder: t5-base
+  base:                       # unet 1 — 27.2M (frozen, seeded from LR run)
+    dim: 128
+    cond_dim: 256
+    dim_mults: [1, 2, 2, 2]
+    num_resnet_blocks: 0
+    layer_attns: [false, true, true, true]
+    layer_cross_attns: [false, true, true, true]
+    optimizer: adam
+    params_m: 27.2
+  sr:                         # unet 2 — 92.7M (shrunk Efficient-U-Net)
+    dim: 128
+    cond_dim: 512
+    dim_mults: [1, 2, 3, 4]
+    num_resnet_blocks: [2, 2, 2, 2]
+    layer_attns: [false, false, false, true]
+    layer_cross_attns: [false, false, false, true]
+    optimizer: adam
+    params_m: 92.7
+
+optim:
+  lr: 1.0e-4
+  warmup_steps: 10000
+  weight_decay: 0.0
+
+train:
+  seed: 42
+  output_dir: outputs/rsdiff1.5
+  batch_size: 64
+  mixed_precision: bf16

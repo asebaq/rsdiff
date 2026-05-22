@@ -62,6 +62,54 @@ class TrainConfig:
 
 
 @dataclass
+class UnetArch:
+    """imagen-pytorch Unet hyperparameters for one cascade stage.
+
+    Field names mirror ``imagen_pytorch.Unet`` so a stage can be built directly.
+    ``num_resnet_blocks`` is int or per-stage tuple. ``params_m`` is the measured
+    parameter count (millions) — documentation only, not consumed at build time.
+    """
+
+    dim: int = 128
+    cond_dim: int = 256
+    dim_mults: tuple[int, ...] = (1, 2, 2, 2)
+    num_resnet_blocks: Any = 0
+    layer_attns: tuple[bool, ...] = (False, True, True, True)
+    layer_cross_attns: tuple[bool, ...] = (False, True, True, True)
+    optimizer: str = "adam"  # adam | adafactor
+    params_m: float | None = None
+
+
+@dataclass
+class CascadeConfig:
+    """Cascaded LR (+ optional SR) imagen-style pipeline (the thesis baseline).
+
+    Parallel to ``model`` (the diffusers rewrite). ``enabled: false`` by default so
+    existing single-stage configs are unaffected. ``sr: null`` = LR-only.
+    """
+
+    enabled: bool = False
+    image_sizes: tuple[int, ...] = (128, 256)
+    timesteps: int = 1000
+    cond_drop_prob: float = 0.1
+    text_encoder: str = "t5-base"
+    base: UnetArch = field(default_factory=UnetArch)
+    sr: UnetArch | None = None
+
+
+@dataclass
+class MetaConfig:
+    """Preset provenance — which model line, expected/measured FID, notes."""
+
+    version: str = ""          # rsdiff1 | rsdiff1.5-light | ...
+    reflects: str = ""         # "paper §3.3 prose" | "thesis actual run" | ...
+    params_m: float | None = None
+    fid_expected: float | None = None
+    fid_measured: float | None = None
+    notes: str = ""
+
+
+@dataclass
 class RunConfig:
     data: DataConfig = field(default_factory=DataConfig)
     text_encoder: TextEncoderConfig = field(default_factory=TextEncoderConfig)
@@ -69,6 +117,8 @@ class RunConfig:
     diffusion: DiffusionConfig = field(default_factory=DiffusionConfig)
     optim: OptimConfig = field(default_factory=OptimConfig)
     train: TrainConfig = field(default_factory=TrainConfig)
+    cascade: CascadeConfig = field(default_factory=CascadeConfig)
+    meta: MetaConfig = field(default_factory=MetaConfig)
 
 
 def load_config(path: str | Path) -> RunConfig:

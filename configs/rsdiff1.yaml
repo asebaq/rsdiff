@@ -1,0 +1,62 @@
+# rsdiff1 — paper-faithful cascade (RSDiff, NCAA 2024, as described in §3.3).
+#
+# Two-stage Imagen-style cascade: 260.8M base (128²) + 462.4M SR (128→256²).
+# Pipeline = 723.2M ≈ the abstract's stated "0.75 billion" parameters.
+#
+# NOTE on the paper's internal inconsistency: §3.3 states 260M base + 260M SR
+# (= 520M), but the abstract says 0.75B. The committed code's SR unet is 462.4M,
+# and 260.8M + 462.4M = 723M ≈ 0.75B — so the abstract figure is the consistent
+# one and §3.3's "260M SR" is a misstatement. rsdiff1 encodes the runnable code
+# artifacts (big base + original SR), not the §3.3 prose figure.
+#
+# This is NOT the config that produced the reported FID 66.49 — see rsdiff1.5*.
+
+meta:
+  version: rsdiff1
+  reflects: "paper NCAA 2024 §3.3 / abstract 0.75B"
+  params_m: 723.2
+  fid_expected: null          # paper headline; provenance (stage/feature) unrecoverable
+  fid_measured: null
+  notes: "big base (nrb=3) + original Efficient-U-Net SR. Adafactor base / Adam SR per paper."
+
+data:
+  name: rsicd
+  root: data/RSICD_optimal
+  image_size: 128
+  num_workers: 4
+
+cascade:
+  enabled: true
+  image_sizes: [128, 256]
+  timesteps: 1000
+  cond_drop_prob: 0.1
+  text_encoder: t5-base
+  base:                       # unet 1 — 260.8M (Imagen_text_big_pytorch.py)
+    dim: 128
+    cond_dim: 512
+    dim_mults: [1, 2, 4, 8]
+    num_resnet_blocks: 3
+    layer_attns: [false, true, true, true]
+    layer_cross_attns: [false, true, true, true]
+    optimizer: adafactor
+    params_m: 260.8
+  sr:                         # unet 2 — 462.4M (Efficient-U-Net)
+    dim: 128
+    cond_dim: 512
+    dim_mults: [1, 2, 4, 8]
+    num_resnet_blocks: [2, 4, 8, 8]
+    layer_attns: [false, false, false, true]
+    layer_cross_attns: [false, false, false, true]
+    optimizer: adam
+    params_m: 462.4
+
+optim:
+  lr: 1.0e-4
+  warmup_steps: 10000         # paper: 10k linear warmup
+  weight_decay: 0.0
+
+train:
+  seed: 42
+  output_dir: outputs/rsdiff1
+  batch_size: 64
+  mixed_precision: bf16
