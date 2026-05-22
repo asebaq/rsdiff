@@ -68,21 +68,26 @@ def config(args):
 
 
 def build_models(args):
-    # unets for unconditional imagen
+    # Base 128x128 generator (unet 1). Must match legacy/DDPM/Imagen_text_pytorch.py
+    # build_models() exactly so the trained `full_lr_gdm` checkpoint loads into it.
+    # We seed this from the LR run and freeze it; only the SR unet (unet 2) trains.
     unet_gen = Unet(
         dim=128,
-        cond_dim=512,
-        dim_mults=(1, 2, 4, 8),
-        num_resnet_blocks=3,
+        cond_dim=256,
+        dim_mults=(1, 2, 2, 2),
+        num_resnet_blocks=0,
         layer_attns=(False, True, True, True),
         layer_cross_attns=(False, True, True, True)
     )
 
+    # SR unet (unet 2) = rsdiff1.5 optimized config (~92.7M). Shrunk from the
+    # original 462.4M Efficient-U-Net: dim_mults deepest 8x->4x, num_resnet_blocks
+    # ->(2,2,2,2). See configs/rsdiff1.5.yaml. configs/rsdiff1.yaml keeps the 462M.
     unet_sr = Unet(
         dim=128,
         cond_dim=512,
-        dim_mults=(1, 2, 4, 8),
-        num_resnet_blocks=(2, 4, 8, 8),
+        dim_mults=(1, 2, 3, 4),
+        num_resnet_blocks=(2, 2, 2, 2),
         layer_attns=(False, False, False, True),
         layer_cross_attns=(False, False, False, True)
     )
@@ -122,51 +127,83 @@ def build_dataloaders(df, args, image_size=64):
     return train_dataloader, test_dataloader
 
 
+def seed_base_unet(imagen, lr_ckpt, logger):
+    """Load the trained LR base (unet 1) from an ImagenTrainer checkpoint.
+
+    Seeds imagen.unets[0] from the `unets.0.*` slice of the LR run's saved
+    state. Must run BEFORE ImagenTrainer() is constructed so the trainer's EMA
+    copy is initialised from the seeded weights, not the random init.
+    """
+    if not os.path.isfile(lr_ckpt):
+        raise FileNotFoundError(f'--lr_ckpt not found: {lr_ckpt}')
+    ckpt = torch.load(lr_ckpt, map_location='cpu')
+    model_sd = ckpt['model'] if isinstance(ckpt, dict) and 'model' in ckpt else ckpt
+    prefix = 'unets.0.'
+    base_sd = {k[len(prefix):]: v for k, v in model_sd.items() if k.startswith(prefix)}
+    if not base_sd:
+        raise RuntimeError(f'no {prefix}* tensors in {lr_ckpt} (wrong checkpoint?)')
+    imagen.unets[0].load_state_dict(base_sd, strict=True)
+    logger.info(f'seeded base unet (unet 1) from {lr_ckpt}: {len(base_sd)} tensors')
+
+
+def freeze_base_unet(imagen, logger):
+    n = 0
+    for p in imagen.unets[0].parameters():
+        p.requires_grad_(False)
+        n += 1
+    imagen.unets[0].eval()
+    logger.info(f'froze base unet (unet 1): {n} param tensors, requires_grad=False')
+
+
 def train(imagen, df, logger, writer, args):
-    
-    # working training loop
-    models = ['Gen-UNet', 'SR-UNet']
-    image_sizes = [args.img_sz, args.sr_sz]
-    max_batch_sizes = [4, 2]
+    # Path B: base (unet 1) is seeded from the trained LR run and frozen.
+    # Only the super-resolution unet (unet 2) trains here.
+    SR_UNET = 2
     model_path = os.path.join(args.log_dir, 'checkpoint.pt')
+    resume = os.path.isfile(model_path)
 
-    for i in (2, 1):
-    # for i in (1, 2):
-        train_dataloader, test_dataloader = build_dataloaders(df, args, image_sizes[i-1])
-        trainer = ImagenTrainer(imagen=imagen)
-        if args.device == 'cuda':
-            trainer = trainer.cuda()
-        # Load model
-        if os.path.isfile(model_path):
-            trainer.load(model_path)
-            
-        for j in range(args.start_epoch, args.epochs):
-            loss = 0
+    # Seed the frozen base before constructing the trainer (EMA copies it).
+    if not resume:
+        seed_base_unet(imagen, args.lr_ckpt, logger)
+    freeze_base_unet(imagen, logger)
+
+    trainer = ImagenTrainer(imagen=imagen)
+    if args.device == 'cuda':
+        trainer = trainer.cuda()
+    if resume:
+        trainer.load(model_path)
+        logger.info(f'resumed SR training from {model_path}')
+        freeze_base_unet(imagen, logger)  # re-freeze after restore
+
+    train_dataloader, test_dataloader = build_dataloaders(df, args, args.sr_sz)
+
+    for j in range(args.start_epoch, args.epochs):
+        loss = 0
+        start = time.time()
+        for _, (imgs, txts) in enumerate(tqdm(train_dataloader)):
+            loss += trainer(
+                imgs,
+                texts=txts,
+                unet_number=SR_UNET,
+                max_batch_size=2
+            )
+            trainer.update(unet_number=SR_UNET)
+        loss = loss / max(len(train_dataloader), 1)
+        writer.add_scalar('Imagen SR-UNet Model', round(loss, 3), j)
+
+        logger.info(
+            f'Finished epoch {j} for SR-UNet model with loss: {round(loss, 3)} in {round(time.time() - start, 3)} sec')
+
+        if not (j % 5):
+            data = next(iter(test_dataloader))
+            txt = data[1][0]
             start = time.time()
-            for _, (imgs, txts) in enumerate(tqdm(train_dataloader)):
-                loss += trainer(
-                    imgs,
-                    texts=txts,
-                    unet_number=i,
-                    max_batch_size=max_batch_sizes[i-1]
-                )
-                trainer.update(unet_number=i)
-            loss = loss / max(len(train_dataloader), 1)
-            writer.add_scalar(f'Imagen {models[i-1]} Model', round(loss, 3), j)
-
-            logger.info(
-                f'Finished epoch {j} for {models[i-1]} model with loss: {round(loss, 3)} in {round(time.time() - start, 3)} sec')
-
-            if not (j % 5):
-                data = next(iter(test_dataloader))
-                txt = data[1][0]
-                start = time.time()
-                images = trainer.sample(texts=[txt], batch_size=1, stop_at_unet_number=i, return_pil_images=True)
-                logger.info(f'Sampling time: {round(time.time() - start, 3)} sec')
-                image_path = os.path.join(args.log_dir, 'generated_images',
-                                          f"sample-{models[i-1]}-{j}-text-{'_'.join(txt.replace('.', '').split())}.png")
-                images[0].save(image_path)
-            trainer.save(model_path)
+            images = trainer.sample(texts=[txt], batch_size=1, stop_at_unet_number=SR_UNET, return_pil_images=True)
+            logger.info(f'Sampling time: {round(time.time() - start, 3)} sec')
+            image_path = os.path.join(args.log_dir, 'generated_images',
+                                      f"sample-SR-UNet-{j}-text-{'_'.join(txt.replace('.', '').split())}.png")
+            images[0].save(image_path)
+        trainer.save(model_path)
 
 
 def main(args):
@@ -178,7 +215,7 @@ def main(args):
     imagen, unet_gen, unet_sr = build_models(args)
     params = sum(p.numel() for p in unet_gen.parameters())
     logger.info(f'Number of image generation UNet model parameters : {params:,}')
-    params = sum(p.numel() for p in unet_gen.parameters())
+    params = sum(p.numel() for p in unet_sr.parameters())
     logger.info(f'Number of super-resolution UNet model parameters : {params:,}')
     params = sum(p.numel() for p in imagen.parameters())
     logger.info(f'Number of Imagen model parameters : {params:,}')
@@ -205,8 +242,11 @@ if __name__ == '__main__':
                         default=os.path.join(REPO_ROOT, 'RSICD_optimal'),
                         help='Path to data directory')
     parser.add_argument('-l', '--log_dir', type=str,
-                        default=os.path.join(REPO_ROOT, 'DDPM', 'logs', 'exp_imagen_text_sr_t5_base_bs64'),
+                        default=os.path.join(REPO_ROOT, 'DDPM', 'logs', 'full_sr_gdm'),
                         help='Path to log directory')
+    parser.add_argument('--lr_ckpt', type=str,
+                        default=os.path.join(REPO_ROOT, 'DDPM', 'logs', 'full_lr_gdm', 'checkpoint.pt'),
+                        help='Trained LR base checkpoint to seed + freeze unet 1 (path B).')
     parser.add_argument('--device', type=str, default='auto',
                         choices=['auto', 'cuda', 'mps', 'cpu'],
                         help='Compute device (auto detects).')
