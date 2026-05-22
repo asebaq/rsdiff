@@ -47,3 +47,7 @@ secrets/
 .claude/settings.local.json
 .claude/.memory/
 
+secrets/
+# mkdocs build output
+docs/site/site/
+*.lock

@@ -18,22 +18,37 @@ caption  ──▶ T5-base ──┬──▶ LR-GDM (128²)  ──▶  x_lr
 
 ## Architectures
 
-| Stage | Resolution | Params (measured) | Conditioning | Loss |
-|---|---|---|---|---|
-| LR-GDM | 128² | 27.2M | T5 cross-attn (CFG p=0.1) | ε-prediction MSE |
-| SRDM | 256² | ~27M | T5 cross-attn + LR image | ε-prediction MSE |
-| T5-base | — | 220M (frozen) | — | — |
-| **Total** | | **~274M** | | |
+`rsdiff` ships two configs — same code path, two points on the size/quality
+curve. **rsdiff1.5** is the optimized cascade we train and release; **rsdiff1**
+is the paper-faithful (heavyweight) cascade kept for a head-to-head row.
 
-UNet topology (both stages):
+=== "rsdiff1.5 (optimized — released)"
 
-- `dim=128`, `cond_dim=256`, `dim_mults=(1, 2, 2, 2)`
-- `num_resnet_blocks=0` — attention-only blocks, no ResNet stacks per level
-- Attention + cross-attention from level 1 onward (`layer_attns=(False, True, True, True)`)
-- 1000 timesteps, linear β schedule
+    | Stage | Resolution | Params | Conditioning | Optimizer |
+    |---|---|---|---|---|
+    | LR-GDM | 128² | 27.2M | T5 cross-attn (CFG p=0.1) | Adam |
+    | SRDM | 256² | 92.7M | T5 cross-attn + LR image | Adam |
+    | T5-base | — | 220M (frozen) | — | — |
+    | **Cascade total** | | **119.9M** | | |
+
+    - LR-GDM: `dim=128`, `cond_dim=256`, `dim_mults=(1,2,2,2)`, `num_resnet_blocks=0` — attention-only, the net that produced the thesis FID 66.49.
+    - SRDM: `dim=128`, `cond_dim=512`, `dim_mults=(1,2,3,4)`, `num_resnet_blocks=(2,2,2,2)` — shrunk Efficient-U-Net (deepest stage 8×→4×).
+
+=== "rsdiff1 (paper-faithful)"
+
+    | Stage | Resolution | Params | Conditioning | Optimizer |
+    |---|---|---|---|---|
+    | LR-GDM | 128² | 260.8M | T5 cross-attn (CFG p=0.1) | Adafactor |
+    | SRDM | 256² | 462.4M | T5 cross-attn + LR image | Adam |
+    | T5-base | — | 220M (frozen) | — | — |
+    | **Cascade total** | | **723.2M** | | |
+
+    ≈ the abstract's stated 0.75 B parameters. `dim_mults=(1,2,4,8)`, deeper ResNet stacks. See [`configs/rsdiff1.yaml`](https://github.com/asebaq/rsdiff/blob/main/configs/rsdiff1.yaml) for the full topology and the note on the paper's internal 520M-vs-0.75B inconsistency.
+
+All stages: 1000 timesteps, ε-prediction MSE, classifier-free guidance (`cond_drop_prob=0.1`).
 
 !!! note "Code vs paper divergence"
-    The thesis paper reports 260M-param UNets and Adafactor optimizer. The shipped training code uses `num_resnet_blocks=0` (which collapses each level to attention-only, ~27M params) and the imagen-pytorch default Adam optimizer. The reported FID 66.49 was produced by the code, not the paper recipe. See [`legacy/README.md`](https://github.com/asebaq/rsdiff/blob/main/legacy/README.md) for the full table.
+    The thesis paper describes ~260M UNets with Adafactor. The training code that produced the reported **FID 66.49** actually ran a 27.2M attention-only base (`num_resnet_blocks=0`) on Adam defaults. `rsdiff1.5` encodes that real, lightweight base; `rsdiff1` encodes the paper-prose architecture. See [`legacy/README.md`](https://github.com/asebaq/rsdiff/blob/main/legacy/README.md) for the full table.
 
 ## Dataset
 
@@ -42,18 +57,25 @@ UNet topology (both stages):
 - 30 land-cover classes inferred from filename prefix (airport, baseball field, …).
 - Captions normalised to lowercase + trailing ` .` to match the thesis tokenizer convention.
 
-## Training recipe (legacy thesis)
+## Training recipe (rsdiff1.5)
 
-| | LR-GDM | SRDM |
+The two stages train **sequentially (path B)**: train the 27.2M base to 1000
+epochs, then seed and **freeze** it and train only the 92.7M SR UNet on top. The
+base never sees the SR optimizer — this keeps the FID-66.49 base intact and
+isolates SR quality.
+
+| | LR-GDM (stage 1) | SRDM (stage 2, path B) |
 |---|---|---|
 | Batch size | 64 | 64 |
 | Epochs | 1000 | 1000 |
-| Optimizer | Adam, lr=1e-4, β=(0.9, 0.99) | Adam, lr=1e-4 |
-| Warmup | 0 | 0 |
+| Optimizer | Adam, lr=1e-4 | Adam, lr=1e-4 |
+| Warmup | 10k steps | 10k steps |
 | Weight decay | 0 | 0 |
+| Mixed precision | bf16 | bf16 |
 | CFG drop prob | 0.1 | 0.1 |
-| Hardware | 1× A6000 (or A100) | 1× A6000 |
-| Wall-clock | ~7 days | ~10 days |
+| Base | trained from scratch | **seeded + frozen** from stage 1 |
+| Hardware | 1× RTX 4090 (vast.ai) | 1× RTX 4090 |
+| Wall-clock | ~119 h | _TBD_ |
 
 ## v1 design (planned)
 

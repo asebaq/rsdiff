@@ -30,8 +30,8 @@ Clean rewrite of the 2024 master's thesis [*RSDiff: A Diffusion-Based Framework 
 
     ---
 
-    128×128 base model (LR-GDM) + 256×256 super-resolution model (SRDM),
-    both T5-conditioned. Latent-diffusion variant in v1.x.
+    128×128 base (LR-GDM, 27.2M) + 256×256 super-resolution (SRDM, 92.7M),
+    both T5-conditioned. 119.9M total. Latent-diffusion variant in v2.
 
 -   :material-package-variant:{ .lg .middle } __Open weights__
 
@@ -45,20 +45,27 @@ Clean rewrite of the 2024 master's thesis [*RSDiff: A Diffusion-Based Framework 
 ## Quickstart
 
 ```bash
-pip install rsdiff
-rsdiff sample --prompt "dense residential area near the port" --out sample.png
+git clone https://github.com/asebaq/rsdiff && cd rsdiff
+uv venv && source .venv/bin/activate
+uv pip install -e ".[dev,eval]"
+
+# sample from a trained cascade (legacy engine)
+python legacy/DDPM/sample_grid.py \
+  --log_dir legacy/DDPM/logs/full_lr_gdm --data_root data/RSICD_optimal \
+  --n 16 --cols 4 --cond_scale 4.0 --split test --sr
 ```
 
-See the [Usage](usage.md) page for installation, sampling, and training instructions.
+`pip install rsdiff` and a one-line `rsdiff sample` CLI land with the first release. See the [Usage](usage.md) page for the full installation, sampling, and training runbook.
 
 ## Status
 
-| | Version | Notes |
+| Milestone | Tag | Status |
 |---|---|---|
-| Thesis reproduction (cascade, T5-base, FID ≤ 70) | v0.x | in progress |
-| Latent diffusion (VAE-encoded, single stage 256²) | v1.0 | planned |
-| RemoteCLIP text encoder | v1.x | planned |
-| ControlNet (layout / segmentation conditioning) | v2.0 | planned |
+| Thesis cascade reproduction (rsdiff1.5, 119.9M, FID ≤ 70) | v0 | SR stage training |
+| Paper-faithful cascade (rsdiff1, 723.2M) | v0 | optional |
+| `diffusers`-native trainer (DDIM/DPM-Solver sampling) | v0.x | planned |
+| Latent diffusion (VAE-encoded, single stage 256²) | v2 | planned |
+| ControlNet (layout / segmentation conditioning) | v1 | planned |
 
 See [`docs/roadmap.md`](https://github.com/asebaq/rsdiff/blob/main/docs/roadmap.md) for the full milestone list.
 

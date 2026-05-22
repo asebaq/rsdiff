@@ -2,28 +2,25 @@
 
 ## Installation
 
-=== "pip"
+Install from source until the first tagged release; `pip install rsdiff` lands then.
 
-    ```bash
-    pip install rsdiff
-    ```
-
-=== "uv (recommended)"
-
-    ```bash
-    uv venv && source .venv/bin/activate
-    uv pip install rsdiff
-    ```
-
-=== "from source"
+=== "from source (current)"
 
     ```bash
     git clone https://github.com/asebaq/rsdiff
     cd rsdiff
     uv venv && source .venv/bin/activate
     uv pip install -e ".[dev,eval]"
-    pytest -q
+    pytest -q                               # smoke tests, no GPU/network
     ```
+
+=== "pip (after release)"
+
+    ```bash
+    uv pip install rsdiff                   # or: pip install rsdiff
+    ```
+
+Requires Python ≥ 3.10.
 
 ## Sampling
 
@@ -70,29 +67,35 @@ imgs[0].save("sample.png")
 
 ## Training (legacy path)
 
-Reproducing the thesis baseline on a single GPU:
+Reproducing `rsdiff1.5` on a single GPU. The cascade trains in two stages
+(path B): the 27.2M base first, then the 92.7M SR UNet on the frozen base.
 
 ```bash
 # 1. Provision a vast.ai GPU (see scripts/vast_run.sh)
-export VAST_API_KEY=...
-./scripts/vast_run.sh launch              # picks cheapest A6000+
+export VAST_API_KEY=...                    # read from .env
+./scripts/vast_run.sh launch              # picks a cheap RTX 4090
 ./scripts/vast_run.sh wait
 ./scripts/vast_run.sh rsync
 ./scripts/vast_run.sh bootstrap
 
-# 2. Smoke check (10 epochs, ~2 hours)
+# 2. Smoke check (10 epochs)
 ./scripts/vast_run.sh run 10 smoke_lr_gdm
 ./scripts/vast_run.sh logs
 
-# 3. Full LR-GDM run (1000 epochs, ~7 days)
+# 3. Stage 1 — LR-GDM base, 1000 epochs (~119 h on a 4090)
 ./scripts/vast_run.sh run 1000 full_lr_gdm
 
-# 4. Pull artifacts back to local before destroying
+# 4. Stage 2 — SR UNet on the frozen base (path B)
+./scripts/vast_run.sh run-sr 1000 full_sr_gdm
+
+# 5. Pull artifacts back to local before destroying
 ./scripts/vast_run.sh pull
 ./scripts/vast_run.sh destroy
 ```
 
-The script reads `VAST_API_KEY` from `.env`. See `scripts/vast_run.sh help` for the full subcommand list.
+The script reads `VAST_API_KEY` from `.env`. Long runs go in a detached `tmux`
+session (the SSH wrapper drops on long commands). See `scripts/vast_run.sh help`
+for the full subcommand list.
 
 ## Evaluation
 

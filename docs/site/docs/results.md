@@ -1,21 +1,41 @@
 # Results
 
 !!! warning "Reproduction in progress"
-    The v0 reproduction run is currently training on a single RTX A6000. Final numbers will replace the placeholders in this page once the 1000-epoch run completes.
+    The LR base run (rsdiff1.5) is complete; the super-resolution stage is training on a single RTX 4090. The headline 256² numbers below are placeholders until the SR run finishes and the full-test-split eval runs.
 
-## Quantitative
+## Headline FID
 
-FID and CLIP-score reported on the **RSICD test split** (1,093 images), with `cond_scale=4.0`, 1000-step DDPM sampling, 5 captions per image.
+The paper-comparable number is computed **once**, on the final checkpoint: generate the full **RSICD test split** (1,093 images, `cond_scale=4.0`, 1000-step DDPM), score FID against the 1,093 real test images with Inception-V3 features (`feature=2048`) at the cascade output resolution.
 
 | Model | Resolution | FID ↓ | CLIP-score ↑ | Zero-shot OA ↑ | Notes |
 |---|---|---|---|---|---|
-| Thesis original (2024) | 256² | **66.49** | — | — | from `~/dev/ms/code/Generative-Models/` |
-| rsdiff v0 (this repo, legacy) | 256² | _TBD_ | _TBD_ | _TBD_ | reproduction target ≤ 70 |
-| rsdiff v1 (latent diffusion) | 256² | _TBD_ | _TBD_ | _TBD_ | planned, target ≤ 50 |
+| Thesis original (2024) | 256² | **66.49** | — | — | reference target |
+| rsdiff1.5 (this repo) | 256² | _TBD_ | _TBD_ | _TBD_ | SR run in progress, target ≤ 70 |
+| rsdiff1 (paper-faithful) | 256² | _TBD_ | _TBD_ | _TBD_ | optional head-to-head |
+| rsdiff v2 (latent diffusion) | 256² | _TBD_ | _TBD_ | _TBD_ | planned, target ≤ 50 |
+
+## FID-vs-epoch (model selection)
+
+A cheap, **small-N** FID curve (N=64 generations per checkpoint, base 128² only) is tracked during training for early-stop / checkpoint selection. These values are biased high by the small sample count — only the **trend** is meaningful, not the absolute number, and they are **not** comparable to the headline above.
+
+| Epoch | FID (N=64, 128²) |
+|---|---|
+| 100 | 276.8 |
+| 200 | 227.1 |
+| 300 | 221.7 |
+| 400 | 218.9 |
+| 500 | 211.1 |
+| 600 | 208.9 |
+| … | _curve continues to ep1000_ |
+
+Monotone descent, flattening past ep500 — healthy, no divergence.
+
+!!! danger "No selection on test"
+    Checkpoint selection and early-stop use the **val** split only. The test split is touched once, for the headline number, to avoid leakage.
 
 Metric definitions:
 
-- **FID** — Fréchet Inception Distance, Inception-V3 features. We additionally report RS-FID (Inception fine-tuned on AID) once the eval harness lands.
+- **FID** — Fréchet Inception Distance, Inception-V3 features (`feature=2048`). RS-FID (Inception fine-tuned on AID) reported once the eval harness lands.
 - **CLIP-score** — cosine similarity between CLIP text-embedding(caption) and CLIP image-embedding(sample).
 - **Zero-shot OA** — overall accuracy of an off-the-shelf CLIP ViT-L/14 classifier on generated samples, using the 30 RSICD class labels. Tests whether generated content is semantically classifiable as the intended land-cover type.
 
@@ -40,19 +60,23 @@ Per-caption, 4 samples generated at `cond_scale ∈ {3, 4, 5, 7}` to visualise g
 
 ## Inference cost
 
-| Stage | Steps | Time / image (A6000) | Time / image (4090) |
-|---|---|---|---|
-| LR-GDM 128² | 1000 | ~45 s | _TBD_ |
-| SRDM 256² | 1000 | _TBD_ | _TBD_ |
-| Full cascade | 2000 | ~2 min | _TBD_ |
+1000-step DDPM, RTX 4090:
 
-DPM-Solver++ 25-step sampler in v1 should bring this under 5 s per image.
+| Stage | Steps | Time / image |
+|---|---|---|
+| LR-GDM 128² | 1000 | ~15 min (batched: ~110 s/img at batch 8) |
+| SRDM 256² | 1000 | _TBD_ |
+| Full cascade | 2000 | _TBD_ |
 
-## Training cost (this reproduction)
+The 1000-step sampler is the bottleneck. A DPM-Solver++ / DDIM 25-step sampler (in the `diffusers` rewrite) should cut this ~40× — under 5 s per image.
 
-| Stage | GPU | Wall-clock | Cost (vast.ai spot) |
-|---|---|---|---|
-| LR-GDM 1000 ep | RTX A6000 | ~185 h | ~$74 |
-| SRDM 1000 ep | RTX A6000 | ~250 h (projected) | ~$100 |
+## Training cost (rsdiff1.5)
 
-Numbers will be backfilled when training completes.
+vast.ai on-demand RTX 4090 @ ~\$0.56/h:
+
+| Stage | GPU | Epochs | Wall-clock | Cost |
+|---|---|---|---|---|
+| LR-GDM | RTX 4090 | 1000 | ~119 h | ~\$66 |
+| SRDM (path B) | RTX 4090 | 1000 | _TBD_ | _TBD_ |
+
+Numbers backfilled when the SR run completes.

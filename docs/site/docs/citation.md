@@ -5,11 +5,15 @@ If you use `rsdiff` or build on the thesis baseline, please cite both this repos
 ## rsdiff (this work)
 
 ```bibtex
-@mastersthesis{sebaq2024rsdiff,
-  title  = {RSDiff: A Diffusion-Based Framework for Text-to-Satellite-Image Generation},
-  author = {Sebaq, Ahmad},
-  school = {Nile University},
-  year   = {2024}
+@article{sebaq2024rsdiff,
+  title   = {RSDiff: remote sensing image generation from text using diffusion model},
+  author  = {Sebaq, Ahmad and ElHelw, Mohamed},
+  journal = {Neural Computing and Applications},
+  volume  = {36},
+  number  = {36},
+  pages   = {23103--23111},
+  year    = {2024},
+  doi     = {10.1007/s00521-024-10363-3}
 }
 
 @software{sebaq2026rsdiffrepo,
