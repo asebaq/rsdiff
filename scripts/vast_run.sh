@@ -15,6 +15,7 @@
 #   run [EPOCHS] [NAME]   Launch LR training (legacy/run_smoke.sh) via nohup; survives disconnect.
 #                         Default: 10 epochs, LOG_NAME=smoke_lr_gdm. Use 1000 + full_lr_gdm for full run.
 #   run-sr [EPOCHS] [NAME]  Launch SR training (legacy/run_sr.sh, path B) via nohup.
+#   run-joint [EPOCHS] [NAME]  Launch joint fine-tune (legacy/run_joint.sh, both unets) via nohup.
 #                         Default: 1000 epochs, LOG_NAME=full_sr_gdm. Seeds+freezes LR base.
 #                         Env: LR_CKPT overrides the base checkpoint to seed unet 1.
 #   logs [NAME]           Tail logfile.log from legacy/DDPM/logs/<NAME>/ (default smoke_lr_gdm).
@@ -222,6 +223,19 @@ cmd_run_sr() {
       logger_log=legacy/DDPM/logs/${name}/logfile.log"
 }
 
+cmd_run_joint() {
+  require_state
+  local epochs="${1:-200}"
+  local name="${2:-full_joint_gdm}"
+  local ts="$(date +%Y%m%d_%H%M%S)"
+  ssh_cmd "mkdir -p ${REMOTE_ROOT}/outputs && cd ${REMOTE_ROOT} && \
+    EPOCHS=${epochs} LOG_NAME=${name} ${INIT_CKPT:+INIT_CKPT='${INIT_CKPT}'} ${LAMBDA_SR:+LAMBDA_SR='${LAMBDA_SR}'} nohup bash legacy/run_joint.sh \
+      > ${REMOTE_ROOT}/outputs/run_${name}_${ts}.log 2>&1 < /dev/null & \
+    echo started joint run pid=\$! name=${name} epochs=${epochs} \
+      stdout_log=outputs/run_${name}_${ts}.log \
+      logger_log=legacy/DDPM/logs/${name}/logfile.log"
+}
+
 cmd_logs() {
   require_state
   local name="${1:-smoke_lr_gdm}"
@@ -372,6 +386,7 @@ case "${sub}" in
   bootstrap) cmd_bootstrap "$@" ;;
   run)       cmd_run "$@" ;;
   run-sr)    cmd_run_sr "$@" ;;
+  run-joint) cmd_run_joint "$@" ;;
   logs)      cmd_logs "$@" ;;
   gpu)       cmd_gpu "$@" ;;
   pull)      cmd_pull "$@" ;;

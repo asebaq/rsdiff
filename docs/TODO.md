@@ -18,11 +18,37 @@ imagen-pytorch `legacy/` scripts are a temporary bridge — deleted once the
 
 ## In flight
 
-- [ ] **LR base run (rsdiff1.5)** — legacy `full_lr_gdm`, 1000 ep on 4090. ~73%
-      done. Final `checkpoint.pt` seeds the SR stage. (task #26)
+- [ ] **LR base run (rsdiff1.5)** — legacy `full_lr_gdm`, 1000 ep on 4090. ~96%
+      done (ep963 / 12:58 UTC). Final `checkpoint.pt` seeds the SR stage. (task #26)
 - [ ] **SR run (rsdiff1.5, path B)** — after LR ep1000:
       `./scripts/vast_run.sh run-sr 1000 full_sr_gdm`. Base seeded+frozen, train
       92.7M SR only. Then `sample-grid full_sr_gdm` (auto `--sr` 256² cascade). (task #27)
+- [ ] **Joint fine-tune (cheap legacy approx)** — after SR converges:
+      `./scripts/vast_run.sh run-joint 200 full_joint_gdm`. Both unets, base
+      unfrozen, `L = L_LR + 0.8·L_SR` (λ via SR-grad scaling). Seeds both unets
+      from `full_sr_gdm/checkpoint.pt`. Code: `Imagen_text_joint_pytorch.py`.
+      **Smoke 10ep first** — both unets at 256² may OOM on 24GB; tune batch.
+      Two known shortcuts vs paper: both unets see GT low-res (not LR-GDM
+      output); separate backward steps not one graph. True end-to-end joint =
+      rewrite (task #28). See [[project_joint_finetune_divergence]]. (task #29)
+
+### SR migration plan (current 4090 ephemeral — migrate before destroy)
+
+1. ep1000 → pull final ckpt + grids + milestones local (have ep100–900; need ep1000).
+2. Launch new cheap 4090.
+3. **Box-to-box** rsync: new box pulls code + weights + RSICD from old box (faster
+   than local uplink). Fallback if old box dies first: upload ep1000 from local.
+4. Verify new box complete → **then** destroy old.
+
+**Base-milestone selection = plan (a), decided.** SR training is independent of
+the base (unet2 conditions on real 256→128 downsamples, not base output; base
+frozen, used only at cascade *inference*). So: seed SR with ep1000, train SR,
+then select best base milestone (ep700/900/1000) via **full-cascade 256² FID at
+inference** — score the shipped output, not LR-only. Skips the costly large-N
+LR sweep (~$15–30, wrong metric).
+
+**Budget gate:** SR run ~120h+ (≥ LR, heavier at 256²) ≈ $50–70. Balance ~$28
+earlier → **top-up before launch.**
 
 ## Utilities
 
