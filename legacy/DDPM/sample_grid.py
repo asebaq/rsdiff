@@ -163,27 +163,42 @@ def main() -> None:
     out_dir = os.path.join(args.log_dir, 'generated_images', out_name)
     os.makedirs(out_dir, exist_ok=True)
 
+    # Write captions upfront so the index is durable across crashes.
+    pad = max(2, len(str(len(captions) - 1)))
+    with open(os.path.join(out_dir, 'captions.txt'), 'w') as f:
+        f.write('\n'.join(captions) + '\n')
+
+    def png_path(idx: int, cap: str) -> str:
+        return os.path.join(out_dir, f'{idx:0{pad}d}_{slugify(cap)}.png')
+
     start = time.time()
     chunk = args.batch if args.batch > 0 else len(captions)
     images: list[Image.Image] = []
+    n_done = 0
     for i in range(0, len(captions), chunk):
         batch_caps = captions[i:i + chunk]
+        batch_paths = [png_path(i + k, cap) for k, cap in enumerate(batch_caps)]
+        # Resume: skip whole batch if every PNG already on disk.
+        if all(os.path.exists(p) for p in batch_paths):
+            n_done += len(batch_caps)
+            if i % (chunk * 10) == 0:
+                print(f'  skip {n_done}/{len(captions)} (resume)')
+            continue
         sample_kwargs = dict(texts=batch_caps, cond_scale=args.cond_scale, return_pil_images=True)
         if args.sr:
             sample_kwargs['stop_at_unet_number'] = 2
-        images.extend(trainer.sample(**sample_kwargs))
-        print(f'  {len(images)}/{len(captions)} sampled ({time.time() - start:.1f}s)')
-    print(f'sampled {len(images)} in {time.time() - start:.1f}s')
-
-    pad = max(2, len(str(len(images) - 1)))
-    for i, (im, cap) in enumerate(zip(images, captions)):
-        slug = slugify(cap)
-        im.save(os.path.join(out_dir, f'{i:0{pad}d}_{slug}.png'))
+        new_imgs = trainer.sample(**sample_kwargs)
+        for path, im in zip(batch_paths, new_imgs):
+            im.save(path)
+        images.extend(new_imgs)
+        n_done += len(new_imgs)
+        print(f'  {n_done}/{len(captions)} sampled ({time.time() - start:.1f}s)')
+    print(f'sampled {len(images)} new (total on disk {n_done}) in {time.time() - start:.1f}s')
 
     if not args.no_grid:
-        build_grid(images, cols=args.cols).save(os.path.join(out_dir, '_grid.png'))
-    with open(os.path.join(out_dir, 'captions.txt'), 'w') as f:
-        f.write('\n'.join(captions) + '\n')
+        # Rebuild grid from disk so it includes resumed PNGs too.
+        grid_imgs = [Image.open(png_path(i, cap)) for i, cap in enumerate(captions)]
+        build_grid(grid_imgs, cols=args.cols).save(os.path.join(out_dir, '_grid.png'))
 
     print(f'wrote -> {out_dir}')
 
