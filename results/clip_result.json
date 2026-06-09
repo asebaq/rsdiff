@@ -1,0 +1,8 @@
+{
+  "clip_score": 0.2777120769023895,
+  "clip_score_std": 0.030346451327204704,
+  "clip_score_shuffled": 0.23219412565231323,
+  "delta": 0.045517951250076294,
+  "n": 1093,
+  "model": "openai/clip-vit-base-patch32"
+}
