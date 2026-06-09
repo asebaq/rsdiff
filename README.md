@@ -1,58 +1,55 @@
 # rsdiff
 
-Open-source diffusion models for remote-sensing imagery — an open, reproducible
-build of the master's thesis *"RSDiff: A Diffusion-Based Framework for
-Text-to-Satellite-Image Generation"* (Nile University, 2024).
+Open-source text-to-satellite-image diffusion models. Generate 256×256
+overhead imagery from natural-language captions; trained on RSICD.
 
-Generate 256×256 satellite/aerial imagery from a natural-language caption,
-trained on RSICD. Weights, configs, and the full training runbook are open.
+> **Headline.** `rsdiff1.5` — a 120 M-param T5-conditioned cascade — reaches
+> **FID 65.70** and **CLIP-score 0.278** on the full RSICD test split
+> (N=1093, cascade-256, `cond_scale=5`). Pretrained weights, configs,
+> training and eval runbooks, and the full tech report are all open.
+> Methodology, curves, and discussion in [`docs/REPORT.md`](docs/REPORT.md).
+> See also [`docs/roadmap.md`](docs/roadmap.md).
 
-> **Status:** thesis cascade reproduced — **FID 65.70 on the RSICD test split
-> (N=1093)**, slightly better than the paper's reported 66.49. The LR base +
-> super-resolution stages train and sample today via the bundled `legacy/`
-> engine; a clean `diffusers`-native trainer is on the roadmap. Full
-> methodology, curves, and discussion in
-> [`docs/REPORT.md`](docs/REPORT.md). See also [`docs/roadmap.md`](docs/roadmap.md).
-
-Project site: **https://asebaq.github.io/rsdiff**
+Pretrained weights: [`asebaq/rsdiff-sr-cascade-ep650`](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650) on the HF Hub.
+Project site: **https://asebaq.github.io/rsdiff**.
 
 ## What ships
 
-Two configs encode two points on the size/quality curve. Same code path, same
-data, different UNet topology:
+Two configs sit at different points on the size/quality curve. Same code,
+same data, different UNet topology:
 
 | Config | Pipeline | Params | What it is |
 |---|---|---|---|
-| [`configs/rsdiff1.5.yaml`](configs/rsdiff1.5.yaml) | 27.2M base + 92.7M SR | **119.9M** | Optimized cascade. The lightweight base is the net that produced the thesis FID 66.49; SR is a shrunk Efficient-U-Net. |
-| [`configs/rsdiff1.yaml`](configs/rsdiff1.yaml) | 260.8M base + 462.4M SR | **723.2M** | Paper-faithful cascade (≈ the abstract's "0.75 B"). |
+| [`configs/rsdiff1.5.yaml`](configs/rsdiff1.5.yaml) | 27.2 M base + 92.7 M SR | **119.9 M** | Lightweight cascade. This is the released `rsdiff-sr-cascade-ep650` model. |
+| [`configs/rsdiff1.yaml`](configs/rsdiff1.yaml) | 260.8 M base + 462.4 M SR | **723.2 M** | Larger cascade (≈ 0.75 B) — code path identical, training run pending. |
 
-Both are Imagen-style: frozen **T5-base** text encoder → **LR-GDM** (128²) →
-**SRDM** (256²), classifier-free guidance, 1000-step DDPM.
+Both are Imagen-style: frozen **T5-base** text encoder → **LR base** UNet
+(128²) → **SR** UNet (256²), classifier-free guidance, 1000-step DDPM.
 
 ## Results
 
-Reported on the **RSICD test split** (1,093 images), Inception feature=2048,
-`cond_scale=5.0` (CFG-swept winner on the best SR milestone).
+Numbers below are on the **RSICD test split** (1,093 images), Inception
+feature=2048, `cond_scale=5` (selected by a 7-scale CFG sweep on the best
+SR milestone).
 
-| Model | Res | FID ↓ | CLIP ↑ | Notes |
-|---|---|---|---|---|
-| Thesis original (2024) | 256² | **66.49** | — | published target, N unspecified |
-| rsdiff1.5 (this repo) | 256² | **65.70** | **0.278** | full N=1093, SR ep650 × cs=5 |
+| Model | Res | FID ↓ | CLIP ↑ |
+|---|---|---|---|
+| **rsdiff1.5** (released) | 256² | **65.70** | **0.278** |
 
-CLIP shuffled-caption baseline = 0.232 → real-pair lift +0.046. Full curves
-(SR ep50→1000, CFG cs=1→8), parity discussion, and cost breakdown live in
-[`docs/REPORT.md`](docs/REPORT.md). Committed numerics in
-[`results/`](results/).
+CLIP shuffled-caption null baseline = 0.232 → real-pair lift **+0.046**.
+Per-epoch sweep + CFG sweep + headline panel:
 
 ![Headline](docs/figures/headline.png)
 
 | Curve | Figure |
 |---|---|
 | SR FID-vs-epoch sweep (ep50–1000) | [`docs/figures/sr_fid_curve.png`](docs/figures/sr_fid_curve.png) |
-| CFG `cond_scale` sweep on ep650 winner | [`docs/figures/cfg_sweep.png`](docs/figures/cfg_sweep.png) |
+| CFG `cond_scale` sweep on best SR milestone | [`docs/figures/cfg_sweep.png`](docs/figures/cfg_sweep.png) |
 | LR base FID-vs-epoch sweep | [`docs/figures/lr_fid_curve.png`](docs/figures/lr_fid_curve.png) |
 | Random 9-sample montage (RSICD test) | [`docs/figures/sample_montage.png`](docs/figures/sample_montage.png) |
 
+Committed numerics: [`results/`](results/). Full discussion of curves,
+CFG choice, overfit drift, and ablations: [`docs/REPORT.md`](docs/REPORT.md).
 Project site (downloads + interactive views): [project site → Results](https://asebaq.github.io/rsdiff/results/).
 
 ## Quick start
@@ -65,29 +62,34 @@ uv pip install -e ".[dev,eval]"
 pytest -q                                   # smoke tests, no GPU/network
 ```
 
-Sampling from a trained cascade (legacy engine, until the `diffusers` trainer lands):
+Sample 16 captions from the RSICD test split with the released cascade:
 
 ```bash
+hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o legacy/DDPM/ckpts/
 python legacy/DDPM/sample_grid.py \
-  --log_dir legacy/DDPM/logs/full_lr_gdm \
+  --log_dir legacy/DDPM/logs/full_sr_gdm \
   --data_root data/RSICD_optimal \
-  --n 16 --cols 4 --cond_scale 4.0 --split test --sr
+  --ckpt legacy/DDPM/ckpts/ckpt_sr_ep650_step89050.pt \
+  --n 16 --cols 4 --batch 2 --cond_scale 5.0 \
+  --img_sz 128 --sr_sz 256 --ts 1000 \
+  --sr --split test --seed 17
 ```
 
-> `pip install rsdiff` and `huggingface_hub` weight downloads land with the
-> first tagged release. Until then, install from source and train (or pull
-> checkpoints once published under `asebaq/rsdiff-*`).
-
-Cloud-GPU runbook (vast.ai / RunPod): [`scripts/vast_run.sh`](scripts/vast_run.sh).
-Full instructions: [project site → Usage](https://asebaq.github.io/rsdiff/usage/).
+`rsdiff train` (a `diffusers`-native trainer) is in active development;
+until then, use the bundled cascade runner in `legacy/`. Full
+end-to-end training + eval reproducibility runbook (env, dataset, sweeps,
+sample times, costs): [`docs/reproducibility.md`](docs/reproducibility.md).
+Cloud-GPU automation (vast.ai / RunPod): [`scripts/vast_run.sh`](scripts/vast_run.sh).
 
 ## Why
 
-Image diffusion models trained on natural photos degrade on overhead views —
-roads, field texture, and building grids are out of distribution. RS-specific
-generation is useful for augmentation, simulation, and change-detection priors,
-and the open-source landscape is fragmented across one-off paper repos. `rsdiff`
-is one repo, one CLI, with a clear path to more datasets and conditioning modes.
+Generic web-scale diffusion models trained on natural photos degrade on
+overhead views — road lattices, field textures, and building grids sit
+outside the training distribution. RS-specific generation is useful for
+augmentation, simulation, and change-detection priors, and the open-source
+landscape is fragmented across one-off paper repos. `rsdiff` is one repo,
+one CLI, with a clear path to more datasets, larger backbones, and richer
+conditioning modes.
 
 ## License
 
@@ -108,5 +110,5 @@ Apache-2.0. See [`LICENSE`](LICENSE).
 }
 ```
 
-Built on `lucidrains/imagen-pytorch` (cascade engine) and HuggingFace
-`diffusers` (rewrite target). Full bibliography on the [Cite](https://asebaq.github.io/rsdiff/citation/) page.
+Built on `lucidrains/imagen-pytorch` (cascade scaffolding) and HuggingFace
+`diffusers` (current rewrite target).

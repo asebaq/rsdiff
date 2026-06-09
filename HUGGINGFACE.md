@@ -18,56 +18,41 @@ inference: false
 
 # rsdiff-sr-cascade-ep650
 
-Open-source reproduction checkpoint for the 2024 *RSDiff* thesis cascade —
-text-to-satellite imagery, 256×256, T5-base conditioning. **FID 65.70** on
-the full RSICD test split (N=1093), slightly better than the published 66.49.
+A T5-conditioned cascaded diffusion model for **text-to-satellite-image
+generation** at 256×256, trained on RSICD.
 
-- Code & methodology: https://github.com/asebaq/rsdiff
-- Full report (curves, parity, costs): [`docs/REPORT.md`](https://github.com/asebaq/rsdiff/blob/main/docs/REPORT.md)
-- Reproducibility runbook: [`docs/reproducibility.md`](https://github.com/asebaq/rsdiff/blob/main/docs/reproducibility.md)
+- **FID 65.70** on the full RSICD test split (N=1093, Inception
+  feature=2048, cascade-256, `cond_scale=5.0`).
+- **CLIP-score 0.278** (OpenAI ViT-B/32), with a +0.046 lift over a
+  shuffled-caption null baseline.
 
-## Highlights
-
-| Metric | Value | Reference |
-| --- | --- | --- |
-| **FID** (cascade-256, N=1093, feature=2048) | **65.70** | thesis 66.49 |
-| FID (feature=768) | 0.275 | — |
-| CLIP-score (OpenAI ViT-B/32) | 0.278 | shuffled baseline 0.232 |
-| CLIP delta | **+0.046** | text↔image alignment vs null |
-
-`cond_scale=5.0` (winner of a CFG sweep on the best SR milestone, ep650).
+Code & full tech report: https://github.com/asebaq/rsdiff
+([REPORT.md](https://github.com/asebaq/rsdiff/blob/main/docs/REPORT.md)).
 
 ## Architecture
+
+Two-stage Imagen-style cascade conditioned on a frozen T5-base text
+encoder.
 
 | Stage | Params | Resolution | Conditioning |
 | --- | --- | --- | --- |
 | LR base UNet | 27.18 M | 128×128 | T5-base, `p_uncond=0.1` |
-| SR UNet | 92.66 M | 128→256 | T5-base + LR image, `p_uncond=0.1` |
+| SR UNet | 92.66 M | 128 → 256 | T5-base + LR image, `p_uncond=0.1` |
 
-Both unets follow the `lucidrains/imagen-pytorch` cascade scaffolding.
-Training: Adam, T=1000 DDPM steps. Path B — LR base trained 1000 epochs
-first, then frozen at `ep700` (LR FID winner), then SR unet trained 1000
-epochs on top using GT-lowres targets. Best SR milestone: ep650.
+Total ≈ **120 M params**. Sampler: DDPM, T=1000 denoising steps.
 
 ## Files
 
-| File | Size | What |
+| File | Size | What it is |
 | --- | --- | --- |
-| `ckpt_sr_ep650_step89050.pt` | ~1.9 GB | merged cascade (LR base + SR) — load with the legacy trainer |
-| `fid_result.json` | — | headline FID (feature=2048) |
-| `fid_result_f768.json` | — | feature=768 head |
-| `clip_result.json` | — | OpenAI CLIP ViT-B/32 score |
-| `captions.txt` | — | 1093 RSICD-test captions matching the demo PNGs (sorted) |
-| `samples/` | ~2 MB | 16 cherry-picked demo PNGs |
-
-The two slimmer companion checkpoints (`ckpt_step95900.pt` LR base ep700,
-slim SR-only milestones) are not uploaded here; build them from the
-training command in the [reproducibility doc](https://github.com/asebaq/rsdiff/blob/main/docs/reproducibility.md).
+| `ckpt_sr_ep650_step89050.pt` | ~1.9 GB | Merged cascade weights (LR base + SR) |
+| `samples/` | ~2 MB | 16 demo PNGs at 256² + 4×4 grid |
+| `captions.txt` | 72 KB | 1093 RSICD-test captions matching the demo and FID PNGs |
+| `fid_result.json` | — | Headline FID (Inception feature=2048) |
+| `fid_result_f768.json` | — | Cross-comparison FID (feature=768) |
+| `clip_result.json` | — | OpenAI CLIP ViT-B/32 score + shuffled-baseline null |
 
 ## Usage
-
-> The clean `diffusers`-native trainer is still on the roadmap. For now use
-> the bundled legacy engine.
 
 ```bash
 git clone https://github.com/asebaq/rsdiff
@@ -78,7 +63,7 @@ uv pip install -e ".[dev,eval]"
 # pull the checkpoint
 hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o legacy/DDPM/ckpts/
 
-# sample (1 batch of 16 captions from RSICD test split)
+# sample 16 captions from the RSICD test split
 python legacy/DDPM/sample_grid.py \
   --log_dir legacy/DDPM/logs/full_sr_gdm \
   --data_root data/RSICD_optimal \
@@ -88,37 +73,41 @@ python legacy/DDPM/sample_grid.py \
   --sr --split test --seed 17
 ```
 
+A `diffusers`-native sampling path is on the project roadmap; for now the
+bundled cascade runner (`legacy/`) loads this checkpoint directly.
+
 ## Training data
 
 [RSICD](https://huggingface.co/datasets/arampacha/rsicd) — 10 921 paired
-satellite images and natural-language captions, split 8 / 1 / 1 (train / val
-/ test). Only the first caption per image (`sent1`) is used as
-conditioning at train time, matching the thesis protocol.
+satellite images and natural-language captions, official 8/1/1
+train/val/test split (1093 test). At training time the first caption per
+image (`sent1`) is used as the conditioning text.
 
 ## Intended use & limitations
 
 **Intended use.** Research artefact for studying small-scale text-to-RS
-generation, reproducibility of the 2024 thesis, and as a baseline for
-future remote-sensing diffusion work.
+generation. Useful as a baseline for new remote-sensing diffusion work
+and as a starting point for downstream tasks (augmentation, change-
+detection priors).
 
 **Out of scope.**
 
-- Operational/commercial RS imagery synthesis — fidelity is too low.
-- Producing imagery that could be mistaken for real, unaltered satellite
-  data. The model is small (120 M params) and outputs are visibly
-  diffusion-generated.
-- Anything safety-critical (disaster response, surveillance, etc.).
+- Operational or commercial remote-sensing imagery synthesis — visual
+  fidelity is well below modern web-scale models.
+- Generating imagery intended to be mistaken for real satellite data.
+- Anything safety-critical (disaster response, surveillance, defence).
 
 **Known limitations.**
 
-- **Overfit drift past SR ep650.** FID climbs after the bowl; v0 will ship
-  weight decay, augmentation, val-FID, early stop, memorization probe.
-- Single-caption conditioning — no caption-augmentation diversity.
-- Pixel-space cascade — slower at sample time than a latent diffusion port
-  (planned in v1).
-- CFG sweep was scored at N=64 (rank-only, not headline).
-- No memorisation probe yet — small training set + no augmentation means
-  partial memorisation is possible.
+- **Overfit drift past SR ep650.** Validation FID climbs slightly after
+  the bowl (see [REPORT.md §4](https://github.com/asebaq/rsdiff/blob/main/docs/REPORT.md)).
+  No augmentation or weight decay; the train set is small (10 921 images).
+- **Single-caption conditioning.** RSICD provides 5 captions per image;
+  this run uses only the first.
+- **Pixel-space cascade.** Slower at inference than a latent-diffusion
+  port; a latent-space rewrite is on the project roadmap.
+- **No memorisation probe.** Partial training-set memorisation is not
+  ruled out — pHash audit is on the roadmap.
 
 ## License
 
@@ -137,17 +126,4 @@ Apache 2.0 — see [`LICENSE`](https://github.com/asebaq/rsdiff/blob/main/LICENS
   year    = {2024},
   doi     = {10.1007/s00521-024-10363-3}
 }
-
-@software{rsdiff2026,
-  title  = {rsdiff: open-source diffusion models for remote sensing},
-  author = {Sebaq, Ahmad},
-  url    = {https://github.com/asebaq/rsdiff},
-  year   = {2026},
-}
 ```
-
-## Acknowledgements
-
-- `lucidrains/imagen-pytorch` for the cascade scaffolding.
-- Nile University AI program for hosting the thesis work.
-- vast.ai for cheap RTX 4090 hourly compute (~$166 total).
