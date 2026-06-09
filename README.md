@@ -7,9 +7,12 @@ Text-to-Satellite-Image Generation"* (Nile University, 2024).
 Generate 256×256 satellite/aerial imagery from a natural-language caption,
 trained on RSICD. Weights, configs, and the full training runbook are open.
 
-> **Status:** reproduction of the thesis cascade. The LR base + super-resolution
-> stages train and sample today via the bundled `legacy/` engine; a clean
-> `diffusers`-native trainer is on the roadmap. See [`docs/roadmap.md`](docs/roadmap.md).
+> **Status:** thesis cascade reproduced — **FID 65.70 on the RSICD test split
+> (N=1093)**, slightly better than the paper's reported 66.49. The LR base +
+> super-resolution stages train and sample today via the bundled `legacy/`
+> engine; a clean `diffusers`-native trainer is on the roadmap. Full
+> methodology, curves, and discussion in
+> [`docs/REPORT.md`](docs/REPORT.md). See also [`docs/roadmap.md`](docs/roadmap.md).
 
 Project site: **https://asebaq.github.io/rsdiff**
 
@@ -28,14 +31,29 @@ Both are Imagen-style: frozen **T5-base** text encoder → **LR-GDM** (128²) �
 
 ## Results
 
-Reported on the **RSICD test split** (1,093 images), `cond_scale=4.0`.
+Reported on the **RSICD test split** (1,093 images), Inception feature=2048,
+`cond_scale=5.0` (CFG-swept winner on the best SR milestone).
 
-| Model | Res | FID ↓ | Notes |
-|---|---|---|---|
-| Thesis original (2024) | 256² | **66.49** | reference target |
-| rsdiff1.5 (this repo) | 256² | _TBD_ | super-resolution run in progress |
+| Model | Res | FID ↓ | CLIP ↑ | Notes |
+|---|---|---|---|---|
+| Thesis original (2024) | 256² | **66.49** | — | published target, N unspecified |
+| rsdiff1.5 (this repo) | 256² | **65.70** | **0.278** | full N=1093, SR ep650 × cs=5 |
 
-Full table, FID-vs-epoch curve, and sample grids: [project site → Results](https://asebaq.github.io/rsdiff/results/).
+CLIP shuffled-caption baseline = 0.232 → real-pair lift +0.046. Full curves
+(SR ep50→1000, CFG cs=1→8), parity discussion, and cost breakdown live in
+[`docs/REPORT.md`](docs/REPORT.md). Committed numerics in
+[`results/`](results/).
+
+![Headline](docs/figures/headline.png)
+
+| Curve | Figure |
+|---|---|
+| SR FID-vs-epoch sweep (ep50–1000) | [`docs/figures/sr_fid_curve.png`](docs/figures/sr_fid_curve.png) |
+| CFG `cond_scale` sweep on ep650 winner | [`docs/figures/cfg_sweep.png`](docs/figures/cfg_sweep.png) |
+| LR base FID-vs-epoch sweep | [`docs/figures/lr_fid_curve.png`](docs/figures/lr_fid_curve.png) |
+| Random 9-sample montage (RSICD test) | [`docs/figures/sample_montage.png`](docs/figures/sample_montage.png) |
+
+Project site (downloads + interactive views): [project site → Results](https://asebaq.github.io/rsdiff/results/).
 
 ## Quick start
 

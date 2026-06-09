@@ -1,0 +1,37 @@
+cff-version: 1.2.0
+title: "rsdiff: open-source diffusion models for remote sensing"
+message: >-
+  If you use this software or the reproduction results, please cite both the
+  published paper (preferred) and this repository.
+type: software
+authors:
+  - family-names: Sebaq
+    given-names: Ahmad
+    email: ahmad.sebaq@gmail.com
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+repository-code: "https://github.com/asebaq/rsdiff"
+url: "https://asebaq.github.io/rsdiff"
+license: Apache-2.0
+keywords:
+  - diffusion models
+  - text-to-image
+  - remote sensing
+  - satellite imagery
+  - RSICD
+  - cascaded diffusion
+  - generative models
+preferred-citation:
+  type: article
+  title: "RSDiff: remote sensing image generation from text using diffusion model"
+  authors:
+    - family-names: Sebaq
+      given-names: Ahmad
+    - family-names: ElHelw
+      given-names: Mohamed
+  journal: "Neural Computing and Applications"
+  volume: 36
+  issue: 36
+  start: 23103
+  end: 23111
+  year: 2024
+  doi: "10.1007/s00521-024-10363-3"
