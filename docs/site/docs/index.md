@@ -19,37 +19,7 @@ hide:
 
 A T5-conditioned cascaded diffusion model for text-to-satellite-image generation at 256×256, trained on RSICD. The released checkpoint reaches **FID 65.70** and **CLIP-score 0.278** on the full RSICD test split (N=1,093, `cond_scale=5`).
 
-<div class="grid cards" markdown>
-
--   :material-image-multiple:{ .lg .middle } __Text-conditioned__
-
-    ---
-
-    Frozen T5-base text encoder drives both UNets via cross-attention.
-    Classifier-free guidance scales caption adherence at inference time.
-
--   :material-cube-outline:{ .lg .middle } __Cascaded LR + SR__
-
-    ---
-
-    27 M-param 128² base UNet feeds a 92 M-param super-resolution UNet
-    to 256². 120 M parameters total. 1000-step DDPM.
-
--   :material-chart-line:{ .lg .middle } __FID 65.70, CLIP 0.278__
-
-    ---
-
-    Full RSICD test split (N=1,093) at Inception feature=2048. CLIP-score
-    lift +0.046 over a shuffled-caption null baseline.
-
--   :material-package-variant:{ .lg .middle } __Open weights__
-
-    ---
-
-    Pretrained cascade released on the HuggingFace Hub at
-    `asebaq/rsdiff-sr-cascade-ep650`. Apache 2.0 licensed.
-
-</div>
+The cascade is text-conditioned via a frozen T5-base encoder, classifier-free-guided at inference, and split across a 27 M-param 128² base UNet and a 92 M-param 256² super-resolution UNet (120 M total parameters, 1000-step DDPM). Pre-trained weights are released on the HuggingFace Hub at [`asebaq/rsdiff-sr-cascade-ep650`](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650).
 
 ## Headline
 
@@ -70,50 +40,50 @@ See [Results](results.md) for the full FID-vs-epoch sweep, CFG-scale ablation, a
 
 Nine 256×256 samples from the RSICD test split, generated with the released cascade at `cond_scale=5`. Captions shown verbatim — no truncation.
 
-<div class="grid" markdown>
+<div class="sample-grid" markdown>
 
 <figure markdown>
-  ![](samples/sample_0000.png){ width="100%" }
+  <img src="samples/sample_0000.png" width="256" height="256" alt="sample 0000">
   <figcaption>"there's a green pool like an airplane closing the house with a grey roof ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0096.png){ width="100%" }
+  <img src="samples/sample_0096.png" width="256" height="256" alt="sample 0096">
   <figcaption>"there are many large trees on both sides of the wide road ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0199.png){ width="100%" }
+  <img src="samples/sample_0199.png" width="256" height="256" alt="sample 0199">
   <figcaption>"the lake cover the most area of the lake ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0349.png){ width="100%" }
+  <img src="samples/sample_0349.png" width="256" height="256" alt="sample 0349">
   <figcaption>"the waves are crushing on the wet sand ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0499.png){ width="100%" }
+  <img src="samples/sample_0499.png" width="256" height="256" alt="sample 0499">
   <figcaption>"roads and rivers can be seen in the valleys ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0649.png){ width="100%" }
+  <img src="samples/sample_0649.png" width="256" height="256" alt="sample 0649">
   <figcaption>"the airport covers a large area and has many planes ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0799.png){ width="100%" }
+  <img src="samples/sample_0799.png" width="256" height="256" alt="sample 0799">
   <figcaption>"the rectangular pond close to the trapezoidal pond is next to a building with a parking lot surrounded by trees ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_0949.png){ width="100%" }
+  <img src="samples/sample_0949.png" width="256" height="256" alt="sample 0949">
   <figcaption>"some streets divide advertising into several pieces ."</figcaption>
 </figure>
 
 <figure markdown>
-  ![](samples/sample_1049.png){ width="100%" }
+  <img src="samples/sample_1049.png" width="256" height="256" alt="sample 1049">
   <figcaption>"white advertising with surrounding trees is next to a main road and some apartments ."</figcaption>
 </figure>
 
