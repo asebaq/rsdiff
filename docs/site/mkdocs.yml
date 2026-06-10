@@ -1,5 +1,5 @@
-site_name: rsdiff
-site_description: Open-source diffusion models for remote sensing imagery.
+site_name: RSDiff
+site_description: Official PyTorch implementation of RSDiff — a T5-conditioned cascaded diffusion model for text-to-satellite-image generation.
 site_url: https://asebaq.github.io/rsdiff
 site_author: Ahmad Sebaq
 repo_url: https://github.com/asebaq/rsdiff

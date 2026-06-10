@@ -11,10 +11,6 @@ hide:
 [![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github)](https://github.com/asebaq/rsdiff)
 [![License](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/asebaq/rsdiff/blob/main/LICENSE)
 
-<p align="center">
-  <img src="figures/sample_montage.png" width="780" alt="RSDiff samples">
-</p>
-
 > **RSDiff: Remote Sensing Image Generation from Text Using Diffusion Model**
 > [Ahmad Sebaq](https://github.com/asebaq), Mohamed ElHelw
 > Center for Informatics Science, Nile University
@@ -70,27 +66,60 @@ A T5-conditioned cascaded diffusion model for text-to-satellite-image generation
 
 See [Results](results.md) for the full FID-vs-epoch sweep, CFG-scale ablation, and discussion.
 
-## Quick start
+## Samples
 
-```bash
-git clone https://github.com/asebaq/rsdiff && cd rsdiff
-uv venv && source .venv/bin/activate
-uv pip install -e ".[dev,eval]"
+Nine 256×256 samples from the RSICD test split, generated with the released cascade at `cond_scale=5`. Captions shown verbatim — no truncation.
 
-# pull the released cascade
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o ddpm/ckpts/
+<div class="grid" markdown>
 
-# sample 16 captions from the RSICD test split
-python ddpm/sample_grid.py \
-  --log_dir ddpm/logs/full_sr_gdm \
-  --data_root data/RSICD_optimal \
-  --ckpt ddpm/ckpts/ckpt_sr_ep650_step89050.pt \
-  --n 16 --cols 4 --batch 2 --cond_scale 5.0 \
-  --img_sz 128 --sr_sz 256 --ts 1000 \
-  --sr --split test --seed 17
-```
+<figure markdown>
+  ![](samples/sample_0000.png){ width="100%" }
+  <figcaption>"there's a green pool like an airplane closing the house with a grey roof ."</figcaption>
+</figure>
 
-Full installation, training, and evaluation runbook on the [Usage](usage.md) page.
+<figure markdown>
+  ![](samples/sample_0096.png){ width="100%" }
+  <figcaption>"there are many large trees on both sides of the wide road ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_0199.png){ width="100%" }
+  <figcaption>"the lake cover the most area of the lake ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_0349.png){ width="100%" }
+  <figcaption>"the waves are crushing on the wet sand ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_0499.png){ width="100%" }
+  <figcaption>"roads and rivers can be seen in the valleys ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_0649.png){ width="100%" }
+  <figcaption>"the airport covers a large area and has many planes ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_0799.png){ width="100%" }
+  <figcaption>"the rectangular pond close to the trapezoidal pond is next to a building with a parking lot surrounded by trees ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_0949.png){ width="100%" }
+  <figcaption>"some streets divide advertising into several pieces ."</figcaption>
+</figure>
+
+<figure markdown>
+  ![](samples/sample_1049.png){ width="100%" }
+  <figcaption>"white advertising with surrounding trees is next to a main road and some apartments ."</figcaption>
+</figure>
+
+</div>
+
+Full 1,093-image generation bundle on the [HF Hub release](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650) under `samples/`.
 
 ## Acknowledgments
 
