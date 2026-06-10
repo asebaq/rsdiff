@@ -1,0 +1,51 @@
+/* Wider data tables — Material defaults are too narrow for the metrics tables. */
+.md-typeset table:not([class]) {
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.md-typeset table:not([class]) th,
+.md-typeset table:not([class]) td {
+  padding: 0.75rem 1rem;
+}
+
+/* 3-column sample grid — equal-width cells, fixed-square images, centred captions. */
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem 1rem;
+  margin: 1.5rem 0;
+}
+
+.sample-grid figure {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.sample-grid figure img {
+  width: 100%;
+  max-width: 256px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+}
+
+.sample-grid figure figcaption {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--md-default-fg-color--light);
+  line-height: 1.35;
+}
+
+/* Stack to 1 col on narrow screens. */
+@media screen and (max-width: 60em) {
+  .sample-grid {
+    grid-template-columns: 1fr;
+  }
+}
