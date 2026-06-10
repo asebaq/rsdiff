@@ -65,7 +65,7 @@ data/RSICD_optimal/
 
 ## 2. Train the LR base — 1000 ep
 
-Runs `legacy/DDPM/Imagen_text_pytorch.py` end-to-end with milestone
+Runs `ddpm/models/Imagen_text_pytorch.py` end-to-end with milestone
 snapshotting every 100 epochs.
 
 ```bash
@@ -75,7 +75,7 @@ bash scripts/vast_run.sh logs full_lr_gdm          # follow logfile.log
 ```
 
 Wall ~50 hr / ~$36 on a 4090. Outputs land in
-`legacy/DDPM/logs/full_lr_gdm/{checkpoint.pt, milestones/*.pt, logfile.log}`.
+`ddpm/logs/full_lr_gdm/{checkpoint.pt, milestones/*.pt, logfile.log}`.
 
 Periodically pull milestones to local for safekeeping:
 
@@ -90,13 +90,13 @@ trains the SR unet only on GT-lowres targets.
 
 ```bash
 # point LR_CKPT at the chosen base milestone (ep700 = step 95900)
-LR_CKPT=legacy/DDPM/logs/full_lr_gdm/milestones/ckpt_step95900.pt \
+LR_CKPT=ddpm/logs/full_lr_gdm/milestones/ckpt_step95900.pt \
   bash scripts/vast_run.sh run-sr 1000 full_sr_gdm
 bash scripts/vast_run.sh logs full_sr_gdm
 ```
 
 Wall ~85 hr / ~$61 on a 4090. Outputs:
-`legacy/DDPM/logs/full_sr_gdm/{checkpoint.pt, milestones/*.pt, logfile.log}`.
+`ddpm/logs/full_sr_gdm/{checkpoint.pt, milestones/*.pt, logfile.log}`.
 
 The SR milestone files are *slim* — they only carry the SR unet weights,
 not the frozen LR base. Use the merge utility to produce self-contained
@@ -104,14 +104,14 @@ cascade checkpoints for evaluation:
 
 ```bash
 python scripts/merge_base.py \
-  --base   legacy/DDPM/logs/full_lr_gdm/milestones/ckpt_step95900.pt \
-  --slim   legacy/DDPM/logs/full_sr_gdm/milestones/ \
+  --base   ddpm/logs/full_lr_gdm/milestones/ckpt_step95900.pt \
+  --slim   ddpm/logs/full_sr_gdm/milestones/ \
   --suffix _merged
 ```
 
 ## 4. Snapshot epoch grids (optional but useful)
 
-`legacy/DDPM/sample_grid.py` makes a small 16-caption visual grid per
+`ddpm/sample_grid.py` makes a small 16-caption visual grid per
 milestone. Useful for spotting overfitting visually. The
 `snapshot`/`SNAP_WATCH` subcommand keeps the loop running while training
 proceeds.
@@ -126,7 +126,7 @@ The post-training FID sweep that produced the SR FID curve. Idempotent: if
 the TSV already contains a row for a milestone, it is skipped.
 
 ```bash
-bash scripts/sr_fid_sweep.sh           # symlinks data/ to legacy/RSICD_optimal
+bash scripts/sr_fid_sweep.sh           # symlinks data/ to ddpm/RSICD_optimal
 # inside, this launches the fidsweep tmux running scripts/fid_sweep.sh with:
 #   STEPS=20550 27400 ... 137000   (ep150..ep1000 stride 50)
 #   N=128 BATCH=2 FEATURE=2048 SIZE=256 SR=1
@@ -166,7 +166,7 @@ Wall ~10 hr / ~$7. Output: `outputs/fid_cfg_full_sr_gdm_step89050.tsv`.
 ```bash
 # pick winner_step + winner_cs from the two sweeps
 WINNER_STEP=89050 CFG_SCALE=5 bash scripts/sr_final_1093.sh
-GEN_DIR=legacy/DDPM/logs/full_sr_gdm/generated_images/final_test_step89050_cs5 \
+GEN_DIR=ddpm/logs/full_sr_gdm/generated_images/final_test_step89050_cs5 \
   bash scripts/sr_clip_score.sh
 ```
 

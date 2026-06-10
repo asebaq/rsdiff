@@ -13,8 +13,8 @@ from rsdiff.training.config import RunConfig
 
 def train(cfg: RunConfig) -> None:  # pragma: no cover - skeleton
     raise NotImplementedError(
-        "Trainer not implemented yet — pending milestone scope lock. "
-        "See docs/roadmap.md."
+        "Trainer not implemented yet. Use the cascade scripts in ddpm/ as the "
+        "reference until the diffusers-native trainer lands."
     )
 
 

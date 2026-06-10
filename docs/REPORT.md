@@ -197,7 +197,7 @@ unets at the end of training is left as future work.
 
 In rough dependency order, from [`roadmap.md`](roadmap.md):
 
-1. **v0 trainer** — replace `legacy/DDPM/*` with a `diffusers`-native
+1. **v0 trainer** — replace `ddpm/*` with a `diffusers`-native
    trainer that reads `configs/rsicd_text_128.yaml`. Acceptance bar:
    parity with this release's 65.70.
 2. **v0 overfit fixes** — weight decay, caption augmentation,

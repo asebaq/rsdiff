@@ -61,20 +61,20 @@ uv venv && source .venv/bin/activate
 uv pip install -e ".[dev,eval]"
 
 # pull the checkpoint
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o legacy/DDPM/ckpts/
+hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o ddpm/ckpts/
 
 # sample 16 captions from the RSICD test split
-python legacy/DDPM/sample_grid.py \
-  --log_dir legacy/DDPM/logs/full_sr_gdm \
+python ddpm/sample_grid.py \
+  --log_dir ddpm/logs/full_sr_gdm \
   --data_root data/RSICD_optimal \
-  --ckpt legacy/DDPM/ckpts/ckpt_sr_ep650_step89050.pt \
+  --ckpt ddpm/ckpts/ckpt_sr_ep650_step89050.pt \
   --n 16 --cols 4 --batch 2 --cond_scale 5.0 \
   --img_sz 128 --sr_sz 256 --ts 1000 \
   --sr --split test --seed 17
 ```
 
 A `diffusers`-native sampling path is on the project roadmap; for now the
-bundled cascade runner (`legacy/`) loads this checkpoint directly.
+bundled cascade runner (`ddpm/`) loads this checkpoint directly.
 
 ## Training data
 

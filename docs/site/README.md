@@ -34,9 +34,6 @@ docs/site/
     assets/              # images, sample grids (gitignored heavies)
 ```
 
-## Backfill checklist (post-v0)
+## Figures
 
-- [ ] Replace `_TBD_` in `results.md` with measured FID / CLIP-score / OA.
-- [ ] Drop a real 4×4 sample grid into `assets/sample_grid_v0.png` and reference from `index.md` + `results.md`.
-- [ ] Update `index.md` "Status" table — flip thesis-repro row to ✅.
-- [ ] Point usage.md `hf_hub_download` example at the published model id.
+Figures live under `docs/site/docs/figures/` (copied from the repo-level `docs/figures/` so MkDocs can serve them). Regenerate with `python scripts/make_plots.py`.

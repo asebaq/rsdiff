@@ -22,7 +22,7 @@ SR_TSV = VAST / "fid" / "fid_curve_full_sr_gdm.tsv"
 CFG_TSV = VAST / "fid" / "fid_cfg_full_sr_gdm_step89050.tsv"
 LR_TSV = VAST / "fid" / "fid_curve_full_lr_gdm.tsv"
 LOCAL_SR_TSV = REPO / "outputs" / "fid_curve_full_sr_gdm.tsv"
-FINAL_DIR = VAST / "legacy/DDPM/logs/full_sr_gdm/generated_images/final_test_step89050_cs5"
+FINAL_DIR = VAST / "ddpm/logs/full_sr_gdm/generated_images/final_test_step89050_cs5"
 
 plt.rcParams.update({
     "figure.dpi": 110,

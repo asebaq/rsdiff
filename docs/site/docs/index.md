@@ -1,74 +1,97 @@
 ---
-title: rsdiff
+title: RSDiff
 hide:
   - navigation
 ---
 
-# rsdiff
+# RSDiff: Remote Sensing Image Generation from Text
 
-**Diffusion models for remote-sensing imagery.**
+[![Paper](https://img.shields.io/badge/DOI-10.1007%2Fs00521--024--10363--3-blue)](https://doi.org/10.1007/s00521-024-10363-3)
+[![Model](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model-yellow)](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650)
+[![Code](https://img.shields.io/badge/Code-GitHub-181717?logo=github)](https://github.com/asebaq/rsdiff)
+[![License](https://img.shields.io/badge/License-Apache_2.0-green)](https://github.com/asebaq/rsdiff/blob/main/LICENSE)
 
-Clean rewrite of the 2024 master's thesis [*RSDiff: A Diffusion-Based Framework for Text-to-Satellite-Image Generation*](https://github.com/asebaq/rsdiff) on top of HuggingFace `diffusers` + `accelerate`.
+<p align="center">
+  <img src="figures/sample_montage.png" width="780" alt="RSDiff samples">
+</p>
+
+> **RSDiff: Remote Sensing Image Generation from Text Using Diffusion Model**
+> [Ahmad Sebaq](https://github.com/asebaq), Mohamed ElHelw
+> Center for Informatics Science, Nile University
+> *Neural Computing and Applications*, 2024
+> [[Paper](https://doi.org/10.1007/s00521-024-10363-3)] · [[Code](https://github.com/asebaq/rsdiff)] · [[Model](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650)]
+
+A T5-conditioned cascaded diffusion model for text-to-satellite-image generation at 256×256, trained on RSICD. The released checkpoint reaches **FID 65.70** and **CLIP-score 0.278** on the full RSICD test split (N=1,093, `cond_scale=5`).
 
 <div class="grid cards" markdown>
 
--   :material-image-multiple:{ .lg .middle } __Text-to-satellite__
+-   :material-image-multiple:{ .lg .middle } __Text-conditioned__
 
     ---
 
-    Generate 256×256 satellite imagery from natural-language captions.
-    Trained on RSICD (10,921 images / 5 captions each).
-
--   :material-chart-line:{ .lg .middle } __FID 66.49 baseline__
-
-    ---
-
-    Reproduction target from the original thesis on the RSICD test split.
-    See [Results](results.md) for the full table.
+    Frozen T5-base text encoder drives both UNets via cross-attention.
+    Classifier-free guidance scales caption adherence at inference time.
 
 -   :material-cube-outline:{ .lg .middle } __Cascaded LR + SR__
 
     ---
 
-    128×128 base (LR-GDM, 27.2M) + 256×256 super-resolution (SRDM, 92.7M),
-    both T5-conditioned. 119.9M total. Latent-diffusion variant in v2.
+    27 M-param 128² base UNet feeds a 92 M-param super-resolution UNet
+    to 256². 120 M parameters total. 1000-step DDPM.
+
+-   :material-chart-line:{ .lg .middle } __FID 65.70, CLIP 0.278__
+
+    ---
+
+    Full RSICD test split (N=1,093) at Inception feature=2048. CLIP-score
+    lift +0.046 over a shuffled-caption null baseline.
 
 -   :material-package-variant:{ .lg .middle } __Open weights__
 
     ---
 
-    All checkpoints released on HuggingFace Hub under `asebaq/rsdiff-*`.
-    Apache 2.0 licensed.
+    Pretrained cascade released on the HuggingFace Hub at
+    `asebaq/rsdiff-sr-cascade-ep650`. Apache 2.0 licensed.
 
 </div>
 
-## Quickstart
+## Headline
+
+<p align="center">
+  <img src="figures/headline.png" width="720" alt="Headline FID + CLIP">
+</p>
+
+| Metric | Value |
+|---|---|
+| **FID** (cascade-256, N=1093, feature=2048) | **65.70** |
+| **CLIP-score** (OpenAI ViT-B/32) | **0.278** ± 0.030 |
+| CLIP-score (shuffled-caption null) | 0.232 |
+| CLIP-score delta vs null | **+0.046** |
+
+See [Results](results.md) for the full FID-vs-epoch sweep, CFG-scale ablation, and discussion.
+
+## Quick start
 
 ```bash
 git clone https://github.com/asebaq/rsdiff && cd rsdiff
 uv venv && source .venv/bin/activate
 uv pip install -e ".[dev,eval]"
 
-# sample from a trained cascade (legacy engine)
-python legacy/DDPM/sample_grid.py \
-  --log_dir legacy/DDPM/logs/full_lr_gdm --data_root data/RSICD_optimal \
-  --n 16 --cols 4 --cond_scale 4.0 --split test --sr
+# pull the released cascade
+hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o ddpm/ckpts/
+
+# sample 16 captions from the RSICD test split
+python ddpm/sample_grid.py \
+  --log_dir ddpm/logs/full_sr_gdm \
+  --data_root data/RSICD_optimal \
+  --ckpt ddpm/ckpts/ckpt_sr_ep650_step89050.pt \
+  --n 16 --cols 4 --batch 2 --cond_scale 5.0 \
+  --img_sz 128 --sr_sz 256 --ts 1000 \
+  --sr --split test --seed 17
 ```
 
-`pip install rsdiff` and a one-line `rsdiff sample` CLI land with the first release. See the [Usage](usage.md) page for the full installation, sampling, and training runbook.
-
-## Status
-
-| Milestone | Tag | Status |
-|---|---|---|
-| Thesis cascade reproduction (rsdiff1.5, 119.9M, FID ≤ 70) | v0 | SR stage training |
-| Paper-faithful cascade (rsdiff1, 723.2M) | v0 | optional |
-| `diffusers`-native trainer (DDIM/DPM-Solver sampling) | v0.x | planned |
-| Latent diffusion (VAE-encoded, single stage 256²) | v2 | planned |
-| ControlNet (layout / segmentation conditioning) | v1 | planned |
-
-See [`docs/roadmap.md`](https://github.com/asebaq/rsdiff/blob/main/docs/roadmap.md) for the full milestone list.
+Full installation, training, and evaluation runbook on the [Usage](usage.md) page.
 
 ## Acknowledgments
 
-Builds on `lucidrains/imagen-pytorch` (legacy thesis baseline) and the HuggingFace `diffusers` library (rsdiff package). The 2024 thesis was supervised at Nile University.
+Built on `lucidrains/imagen-pytorch` for the cascade scaffolding and the HuggingFace `datasets` mirror of RSICD. Developed at the Center for Informatics Science, Nile University.

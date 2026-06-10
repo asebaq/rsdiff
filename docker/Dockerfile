@@ -17,16 +17,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /workspace
-COPY pyproject.toml /workspace/pyproject.toml
-COPY src/ /workspace/src/
 
-# Install rsdiff (uses pyproject deps).
+# Repo layout — package metadata, the rsdiff scaffold, the cascade implementation,
+# orchestration scripts, configs, and the standalone ddpm requirements pin.
+COPY pyproject.toml /workspace/pyproject.toml
+COPY README.md /workspace/README.md
+COPY LICENSE /workspace/LICENSE
+COPY src/ /workspace/src/
+COPY ddpm/ /workspace/ddpm/
+COPY scripts/ /workspace/scripts/
+COPY configs/ /workspace/configs/
+
+# Install rsdiff (eval extras = clean-fid, transformers, torchmetrics[image])
+# plus the imagen-pytorch + extras pinned by ddpm/requirements_dgx.txt.
 RUN pip install --upgrade pip && \
-    pip install -e ".[eval]"
+    pip install -e ".[eval]" && \
+    pip install -r ddpm/requirements_dgx.txt
 
 # accelerate default config = single GPU bf16 — overridden by `accelerate config`.
 RUN python - <<'PY'
-import os, json, pathlib
+import os, pathlib
 cfg_dir = pathlib.Path(os.path.expanduser("~/.cache/huggingface/accelerate"))
 cfg_dir.mkdir(parents=True, exist_ok=True)
 (cfg_dir / "default_config.yaml").write_text("""compute_environment: LOCAL_MACHINE

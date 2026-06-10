@@ -31,7 +31,7 @@ docs/roadmap.md  # v0 / v0.x / v1 / v1.x / v2 milestones
 
 - **Unmodified thesis code**: `~/dev/ms/code/Generative-Models/`. Treat as a
   read-only historical artifact. Do not edit.
-- **Patched reproduction baseline**: `legacy/` in this repo. Same imagen-pytorch
+- **Patched reproduction baseline**: `ddpm/` in this repo. Same imagen-pytorch
   scripts plus repo-relative paths, device auto-detect, fixed eval bugs,
   newer `requirements_dgx.txt`, and a `REPRODUCE.md` runbook.
 - **Thesis docs**: `~/dev/ms/docs/nu_msc_thesis/` (LaTeX sources + `Thesis.pdf`).
