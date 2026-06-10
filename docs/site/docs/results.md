@@ -7,7 +7,7 @@ All numbers in this page are scored on the official RSICD test split (1,093 imag
 With `(milestone, cond_scale) = (SR ep650, 5)` on the full test split:
 
 <p align="center">
-  <img src="figures/headline.png" width="720" alt="Headline FID + CLIP">
+  <img src="../figures/headline.png" width="720" alt="Headline FID + CLIP">
 </p>
 
 | Metric | Value |
@@ -27,7 +27,7 @@ Full 1,093-image generation bundle and the matching captions index live on the [
 Per-milestone scoring at N=128 samples, cascade-256, feature=2048, `cond_scale=4`. ep50 and ep100 are scored at the same protocol locally; the cloud sweep covers ep150 → ep1000 (stride 50).
 
 <p align="center">
-  <img src="figures/sr_fid_curve.png" width="720" alt="SR FID curve">
+  <img src="../figures/sr_fid_curve.png" width="720" alt="SR FID curve">
 </p>
 
 | Range | FID |
@@ -46,7 +46,7 @@ Full 18-row TSV: [`results/fid_curve_sr.tsv`](https://github.com/asebaq/rsdiff/b
 Per-milestone scoring at N=64 samples, 128×128, Inception feature=2048, `cond_scale=4`.
 
 <p align="center">
-  <img src="figures/lr_fid_curve.png" width="720" alt="LR FID curve">
+  <img src="../figures/lr_fid_curve.png" width="720" alt="LR FID curve">
 </p>
 
 The LR-base curve bottoms at **ep700 = 202.43** and climbs afterwards. ep700 is chosen as the frozen seed for SR training. Full TSV: [`results/fid_curve_lr.tsv`](https://github.com/asebaq/rsdiff/blob/main/results/fid_curve_lr.tsv).
@@ -56,7 +56,7 @@ The LR-base curve bottoms at **ep700 = 202.43** and climbs afterwards. ep700 is 
 On the SR ep650 winner, N=64 per scale (cheap rank-only picker before the expensive headline run), cascade-256, feature=2048.
 
 <p align="center">
-  <img src="figures/cfg_sweep.png" width="720" alt="CFG sweep">
+  <img src="../figures/cfg_sweep.png" width="720" alt="CFG sweep">
 </p>
 
 | `cond_scale` | FID (N=64) |
@@ -76,7 +76,7 @@ The bowl bottoms at `cs=5`. N=64 absolute FID is upward-biased relative to the N
 A random 9-sample look at the 1,093-image headline bundle:
 
 <p align="center">
-  <img src="figures/sample_montage.png" width="780" alt="Sample montage">
+  <img src="../figures/sample_montage.png" width="780" alt="Sample montage">
 </p>
 
 Full bundle (1,093 PNGs + captions) on the [HF Hub release](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650) under `samples/`.
