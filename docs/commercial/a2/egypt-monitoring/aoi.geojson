@@ -64,6 +64,25 @@
           [31.7900, 29.9700]
         ]]
       }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "aoi_id": "new_capital_south_holdout",
+        "working_name": "New Capital southern holdout",
+        "status": "held_out_v4",
+        "boundary_claim": "none"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[
+          [31.7200, 29.9100],
+          [31.7900, 29.9100],
+          [31.7900, 29.9700],
+          [31.7200, 29.9700],
+          [31.7200, 29.9100]
+        ]]
+      }
     }
   ]
 }
