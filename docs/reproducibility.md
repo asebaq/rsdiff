@@ -28,17 +28,17 @@ Box (vast.ai RTX 4090 — PyTorch 2.5 + CUDA 12.4 image works):
 ```bash
 # On the freshly provisioned instance, after rsync'ing this repo to /workspace/rsdiff
 cd /workspace/rsdiff
-bash scripts/vast_setup.sh --download-rsicd     # installs rsdiff[eval] + legacy deps + RSICD
+bash scripts/cloud/vast_setup.sh --download-rsicd  # installs rsdiff[eval] + legacy deps + RSICD
 ```
 
 Cloud-side orchestration (search → launch → bootstrap → ssh):
 
 ```bash
-bash scripts/vast_run.sh search
-bash scripts/vast_run.sh launch <OFFER_ID>
-bash scripts/vast_run.sh wait
-bash scripts/vast_run.sh rsync
-bash scripts/vast_run.sh bootstrap
+bash scripts/cloud/vast_run.sh search
+bash scripts/cloud/vast_run.sh launch <OFFER_ID>
+bash scripts/cloud/vast_run.sh wait
+bash scripts/cloud/vast_run.sh rsync
+bash scripts/cloud/vast_run.sh bootstrap
 ```
 
 ## 1. Dataset — RSICD
@@ -70,8 +70,8 @@ snapshotting every 100 epochs.
 
 ```bash
 # on box, inside tmux
-bash scripts/vast_run.sh run 1000 full_lr_gdm     # nohup-detached, survives SSH drop
-bash scripts/vast_run.sh logs full_lr_gdm          # follow logfile.log
+bash scripts/cloud/vast_run.sh run 1000 full_lr_gdm  # nohup-detached, survives SSH drop
+bash scripts/cloud/vast_run.sh logs full_lr_gdm      # follow logfile.log
 ```
 
 Wall ~50 hr / ~$36 on a 4090. Outputs land in
@@ -80,7 +80,7 @@ Wall ~50 hr / ~$36 on a 4090. Outputs land in
 Periodically pull milestones to local for safekeeping:
 
 ```bash
-bash scripts/vast_run.sh pull-milestones full_lr_gdm
+bash scripts/cloud/vast_run.sh pull-milestones full_lr_gdm
 ```
 
 ## 3. Train the SR unet — Path B, 1000 ep
@@ -91,8 +91,8 @@ trains the SR unet only on GT-lowres targets.
 ```bash
 # point LR_CKPT at the chosen base milestone (ep700 = step 95900)
 LR_CKPT=ddpm/logs/full_lr_gdm/milestones/ckpt_step95900.pt \
-  bash scripts/vast_run.sh run-sr 1000 full_sr_gdm
-bash scripts/vast_run.sh logs full_sr_gdm
+  bash scripts/cloud/vast_run.sh run-sr 1000 full_sr_gdm
+bash scripts/cloud/vast_run.sh logs full_sr_gdm
 ```
 
 Wall ~85 hr / ~$61 on a 4090. Outputs:
@@ -117,7 +117,7 @@ milestone. Useful for spotting overfitting visually. The
 proceeds.
 
 ```bash
-bash scripts/vast_run.sh snapshot full_sr_gdm
+bash scripts/cloud/vast_run.sh snapshot full_sr_gdm
 ```
 
 ## 5. SR FID sweep — 18 milestones
@@ -126,7 +126,7 @@ The post-training FID sweep that produced the SR FID curve. Idempotent: if
 the TSV already contains a row for a milestone, it is skipped.
 
 ```bash
-bash scripts/sr_fid_sweep.sh           # symlinks data/ to ddpm/RSICD_optimal
+bash scripts/eval/sr_fid_sweep.sh      # symlinks data/ to ddpm/RSICD_optimal
 # inside, this launches the fidsweep tmux running scripts/fid_sweep.sh with:
 #   STEPS=20550 27400 ... 137000   (ep150..ep1000 stride 50)
 #   N=128 BATCH=2 FEATURE=2048 SIZE=256 SR=1
@@ -143,8 +143,8 @@ Wall ~52 hr for 18 milestones (~2.9 hr/milestone). Cost ~$37.
 When done, kick off the post-sweep watchers (grid500 backfill + sentinel):
 
 ```bash
-tmux new -d -s postsweep  'bash scripts/sr_post_sweep.sh 2>&1 | tee postsweep.log'
-tmux new -d -s afterpost  'bash scripts/sr_after_postsweep.sh 2>&1 | tee afterpost.log'
+tmux new -d -s postsweep  'bash scripts/cloud/sr_post_sweep.sh 2>&1 | tee postsweep.log'
+tmux new -d -s afterpost  'bash scripts/cloud/sr_after_postsweep.sh 2>&1 | tee afterpost.log'
 ```
 
 `sr_after_postsweep.sh` reads the SR TSV, picks the FID winner (ep650),
@@ -156,7 +156,7 @@ Cheap-N picker (N=64) on the SR winner to choose `cond_scale` for the
 headline. Reads `WINNER_STEP` from env or the watcher derives it.
 
 ```bash
-WINNER_STEP=89050 bash scripts/sr_cfg_sweep.sh      # sweeps cs ∈ {1,2,3,4,5,6,8}
+WINNER_STEP=89050 bash scripts/eval/sr_cfg_sweep.sh  # sweeps cs ∈ {1,2,3,4,5,6,8}
 ```
 
 Wall ~10 hr / ~$7. Output: `outputs/fid_cfg_full_sr_gdm_step89050.tsv`.
@@ -165,9 +165,9 @@ Wall ~10 hr / ~$7. Output: `outputs/fid_cfg_full_sr_gdm_step89050.tsv`.
 
 ```bash
 # pick winner_step + winner_cs from the two sweeps
-WINNER_STEP=89050 CFG_SCALE=5 bash scripts/sr_final_1093.sh
+WINNER_STEP=89050 CFG_SCALE=5 bash scripts/eval/sr_final_1093.sh
 GEN_DIR=ddpm/logs/full_sr_gdm/generated_images/final_test_step89050_cs5 \
-  bash scripts/sr_clip_score.sh
+  bash scripts/eval/sr_clip_score.sh
 ```
 
 Wall ~24 hr (sampling) + a couple of minutes (FID + CLIP). Cost ~$17.
@@ -189,8 +189,8 @@ Two watcher scripts pull as soon as sentinels land — no babysitting:
 
 ```bash
 # local Mac
-bash scripts/sr_post_sweep_pull.sh         &       # waits on POST_SWEEP_DONE
-bash scripts/sr_after_postsweep_pull.sh    &       # waits on POST_FINAL_DONE
+bash scripts/cloud/sr_post_sweep_pull.sh      &    # waits on POST_SWEEP_DONE
+bash scripts/cloud/sr_after_postsweep_pull.sh &    # waits on POST_FINAL_DONE
 ```
 
 Both rsync to `outputs/vast/...` with `--inplace --append --partial` so

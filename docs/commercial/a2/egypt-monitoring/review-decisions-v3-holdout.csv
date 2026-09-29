@@ -1,0 +1,9 @@
+candidate_id,algorithm_confidence,area_m2,score_p90,review_state,change_type,review_note
+new_capital_east_holdout-v3-0001,high,92400.0,12.561,accepted,major_clearing_or_grading,large coherent prepared development area persists into followup
+new_capital_east_holdout-v3-0002,high,23600.0,11.45,accepted,road_network_formation,new continuous road segment persists into followup
+new_capital_east_holdout-v3-0004,high,90000.0,10.84,accepted,road_network_formation,connected branching road formation persists into followup
+new_capital_east_holdout-v3-0005,high,12400.0,9.939,accepted,road_network_formation,new linear road segment persists into followup
+new_capital_east_holdout-v3-0008,high,42400.0,14.551,rejected,rejected,persistent disturbed sand without sufficiently clear construction form
+new_capital_east_holdout-v3-0009,high,10600.0,9.561,accepted,large_structural_footprint,new compact high-contrast footprint persists into followup
+new_capital_east_holdout-v3-0010,high,13500.0,16.309,rejected,rejected,AOI-edge truncation prevents reliable visual classification
+new_capital_east_holdout-v3-0011,high,14500.0,13.524,rejected,rejected,existing linear surface at AOI edge; persistence is not new construction evidence

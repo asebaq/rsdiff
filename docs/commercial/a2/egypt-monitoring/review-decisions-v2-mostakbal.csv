@@ -1,0 +1,18 @@
+candidate_id,algorithm_confidence,area_m2,score_p90,review_state,change_type,review_note
+new_cairo_mostakbal-v2-0001,high,26000.0,9.472,accepted,large_structural_footprint,coherent new structure cluster visible after
+new_cairo_mostakbal-v2-0002,high,60400.0,9.011,accepted,large_structural_footprint,expanded structure cluster and site development
+new_cairo_mostakbal-v2-0003,medium,11900.0,7.201,accepted,large_structural_footprint,new compact structural footprint above threshold
+new_cairo_mostakbal-v2-0004,high,14400.0,8.161,accepted,large_structural_footprint,materially expanded structural footprint
+new_cairo_mostakbal-v2-0005,high,34100.0,9.84,accepted,road_network_formation,new continuous linear corridor visible after
+new_cairo_mostakbal-v2-0006,high,15000.0,11.299,accepted,large_structural_footprint,new high-contrast structural footprint
+new_cairo_mostakbal-v2-0007,high,61500.0,9.199,accepted,road_network_formation,connected road and development corridor becomes visible
+new_cairo_mostakbal-v2-0008,medium,65900.0,6.747,rejected,rejected,broad disturbed sand without sufficiently clear construction form
+new_cairo_mostakbal-v2-0009,high,66100.0,11.042,accepted,large_structural_footprint,new repeated structure rows visible after
+new_cairo_mostakbal-v2-0010,high,16600.0,8.164,rejected,rejected,ambiguous bare-surface change without construction form
+new_cairo_mostakbal-v2-0011,high,11000.0,8.279,rejected,rejected,existing track and disturbed surface without clear new milestone
+new_cairo_mostakbal-v2-0012,high,58700.0,11.732,accepted,road_network_formation,connected branching road network becomes materially clearer
+new_cairo_mostakbal-v2-0013,high,20300.0,10.743,accepted,large_laydown_or_stockpile_change,new large stockpile or laydown pattern
+new_cairo_mostakbal-v2-0014,medium,17200.0,5.728,rejected,rejected,ambiguous bare-ground change without construction form
+new_cairo_mostakbal-v2-0015,high,46500.0,9.114,accepted,large_structural_footprint,coherent expanded construction footprint
+new_cairo_mostakbal-v2-0016,medium,12000.0,7.031,accepted,road_network_formation,new dark continuous road segment
+new_cairo_mostakbal-v2-0017,medium,10800.0,6.029,accepted,large_structural_footprint,new compact high-contrast site footprint

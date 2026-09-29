@@ -1,0 +1,28 @@
+candidate_id,algorithm_confidence,area_m2,score_p90,review_state,change_type,review_note
+new_capital_core-0001,high,8200.0,12.132,rejected,rejected,landscaping or vegetation change
+new_capital_core-0002,high,39300.0,10.855,rejected,rejected,disturbed sand; below frozen 50000 m2 grading threshold
+new_capital_core-0003,high,11300.0,11.247,accepted,road_network_formation,new paved or materially widened approach at roundabout
+new_capital_core-0004,medium,8000.0,6.86,rejected,rejected,structural or surface fragment below frozen 10000 m2 structural threshold
+new_capital_core-0005,high,6000.0,8.556,rejected,rejected,structural fragment below frozen 10000 m2 structural threshold
+new_capital_core-0006,high,6800.0,11.103,rejected,rejected,existing divided-road surface or verge change
+new_capital_core-0007,high,7300.0,8.252,rejected,rejected,existing curved-road edge change
+new_capital_core-0008,high,9800.0,8.742,rejected,rejected,existing divided-road surface change
+new_capital_core-0009,high,12200.0,9.143,rejected,rejected,existing curved-road edge and adjacent fragments
+new_capital_core-0010,high,6200.0,10.576,rejected,rejected,ambiguous surface or structure below frozen size thresholds
+new_capital_core-0011,high,7600.0,13.473,rejected,rejected,structural or surface fragment below frozen 10000 m2 structural threshold
+new_capital_core-0012,high,8800.0,11.092,rejected,rejected,structural fragment below frozen 10000 m2 structural threshold
+new_capital_core-0013,high,9200.0,10.411,rejected,rejected,new structural footprint below frozen 10000 m2 threshold
+new_capital_core-0014,high,6300.0,10.061,rejected,rejected,new structural footprint below frozen 10000 m2 threshold
+new_capital_core-0015,high,6000.0,12.991,rejected,rejected,structural fragment below frozen 10000 m2 structural threshold
+new_capital_core-0016,high,13700.0,17.835,accepted,large_structural_footprint,new or materially expanded high-contrast structural footprint
+new_capital_core-0017,high,7300.0,11.849,rejected,rejected,new structural footprint below frozen 10000 m2 threshold
+new_capital_core-0018,high,6000.0,11.238,rejected,rejected,structural fragment below frozen 10000 m2 structural threshold
+new_capital_core-0019,high,11600.0,14.958,accepted,large_structural_footprint,new high-contrast structure cluster above frozen threshold
+new_capital_core-0020,high,12800.0,13.806,accepted,large_structural_footprint,new high-contrast structure cluster above frozen threshold
+new_capital_core-0021,high,9500.0,12.43,rejected,rejected,landscaping and water-feature change
+new_capital_core-0022,high,15900.0,10.733,rejected,rejected,landscaping and water-feature change
+new_capital_core-0023,high,9500.0,13.595,rejected,rejected,structural cluster below frozen 10000 m2 threshold
+new_capital_core-0024,high,9500.0,8.619,rejected,rejected,existing road verge or surface change
+new_capital_core-0025,high,12400.0,12.272,rejected,rejected,disturbed bare ground below frozen 50000 m2 grading threshold
+new_capital_core-0026,high,13800.0,14.862,accepted,road_network_formation,new continuous road or graded corridor exceeding frozen dimensions
+new_capital_core-0027,medium,10800.0,7.659,rejected,rejected,existing intersection surface change

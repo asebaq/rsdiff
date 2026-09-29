@@ -61,7 +61,8 @@ uv venv && source .venv/bin/activate
 uv pip install -e ".[dev,eval]"
 
 # pull the checkpoint
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o ddpm/ckpts/
+hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt \
+  --local-dir ddpm/ckpts/
 
 # sample 16 captions from the RSICD test split
 python ddpm/sample_grid.py \
@@ -111,7 +112,10 @@ detection priors).
 
 ## License
 
-Apache 2.0 — see [`LICENSE`](https://github.com/asebaq/rsdiff/blob/main/LICENSE).
+The repository's authored code is Apache-2.0. Dataset, dependency, and derived-weight
+rights are separate; see the repository's
+[`LICENSE_AUDIT.md`](https://github.com/asebaq/rsdiff/blob/main/docs/LICENSE_AUDIT.md)
+before commercial use.
 
 ## Citation
 

@@ -1,0 +1,42 @@
+id,organization,country,segment,target_role,why_relevant,public_url,priority,status
+P01,National Authority for Remote Sensing and Space Sciences,Egypt,government/research,"project lead; remote-sensing applications","Direct EO operations and public-sector workflows",https://www.narss.sci.eg/,A,not_contacted
+P02,Egyptian Space Agency,Egypt,government,"earth-observation program lead","National EO programs and downstream applications",https://egsa.gov.eg/,A,not_contacted
+P03,New Urban Communities Authority,Egypt,government,"GIS director; urban monitoring lead","Large new-city portfolio and construction oversight",https://newcities.gov.eg/,A,not_contacted
+P04,Administrative Capital for Urban Development,Egypt,developer,"GIS/BIM manager; project controls director","Recurring construction progress across a large development",https://acud.eg/,A,not_contacted
+P05,The Arab Contractors,Egypt,construction,"digital engineering or surveying manager","Large infrastructure projects with progress-reporting needs",https://www.arabcont.com/,B,not_contacted
+P06,Orascom Construction,Egypt,construction,"digital delivery; project controls; GIS lead","Regional construction portfolio and client reporting",https://orascom.com/,B,not_contacted
+P07,ECG Engineering Consultants Group,Egypt,consultancy,"GIS manager; planning director","Engineering consultancy can be buyer or channel",https://www.ecgsa.com/,A,not_contacted
+P08,EHAF Consulting Engineers,Egypt,consultancy,"GIS/BIM lead; project controls","Construction supervision and reporting workflows",https://ehaf.com/,B,not_contacted
+P09,ACE Moharram Bakhoum,Egypt,consultancy,"GIS or infrastructure digital-delivery lead","Regional engineering and urban-development projects",https://www.ace-mb.com/,B,not_contacted
+P10,Applied Innovation Center,Egypt,research/government,"geospatial project lead","Relevant land-cover and satellite-pipeline experience; discovery channel",https://aic.gov.eg/,A,not_contacted
+P11,Dubai Municipality,UAE,municipality,"GIS center manager; remote-sensing project owner","Public evidence of remote-sensing smart data acquisition",https://www.dm.gov.ae/,A,not_contacted
+P12,Abu Dhabi Department of Municipalities and Transport,UAE,municipality,"geospatial data director; inspection lead","Urban development, permits, and municipal monitoring",https://www.dmt.gov.ae/,A,not_contacted
+P13,Mohammed Bin Rashid Space Centre,UAE,space/EO,"downstream applications or remote-sensing lead","EO data and regional application ecosystem",https://www.mbrsc.ae/,A,not_contacted
+P14,Space42,UAE,geospatial/space,"product director; geospatial analytics lead","Regional satellite and geospatial intelligence provider",https://space42.ai/,A,not_contacted
+P15,Bayanat,UAE,geospatial,"geospatial solutions or product lead","Potential incumbent, partner, or expert interview source",https://www.bayanat.ai/,A,not_contacted
+P16,Aldar Properties,UAE,developer,"digital construction; GIS; project controls","Large property portfolio and progress monitoring",https://www.aldar.com/,B,not_contacted
+P17,Emaar Properties,UAE,developer,"project controls; GIS; digital delivery","High-volume urban development and reporting",https://www.emaar.com/,B,not_contacted
+P18,Dubai Holding Real Estate,UAE,developer,"portfolio controls; GIS manager","Multi-project property-development portfolio",https://dubaiholding.com/en/what-we-do/real-estate/,B,not_contacted
+P19,Parsons Middle East,UAE,engineering,"geospatial manager; project controls director","Infrastructure program management and monitoring",https://www.parsons.com/,B,not_contacted
+P20,AtkinsRealis Middle East,UAE,engineering,"digital twin; geospatial; project controls lead","Regional infrastructure and digital-delivery work",https://www.atkinsrealis.com/,B,not_contacted
+P21,General Authority for Survey and Geospatial Information,Saudi Arabia,government,"geospatial innovation or standards lead","National geospatial authority and buyer-context expert",https://www.geosa.gov.sa/,A,not_contacted
+P22,Ministry of Municipalities and Housing,Saudi Arabia,government,"urban observatory; GIS; inspection lead","Municipal monitoring and urban-compliance workflows",https://momah.gov.sa/,A,not_contacted
+P23,Royal Commission for Riyadh City,Saudi Arabia,government,"urban data/GIS director","Large-scale urban growth and project monitoring",https://www.rcrc.gov.sa/,A,not_contacted
+P24,NEOM,Saudi Arabia,developer,"geospatial; digital twin; project controls lead","Large greenfield construction and monitoring demand",https://www.neom.com/,A,not_contacted
+P25,ROSHN Group,Saudi Arabia,developer,"GIS/BIM; portfolio controls","National housing-development portfolio",https://www.roshn.sa/,A,not_contacted
+P26,Red Sea Global,Saudi Arabia,developer,"GIS; sustainability monitoring; project controls","Distributed construction plus environmental constraints",https://www.redseaglobal.com/,A,not_contacted
+P27,Diriyah Company,Saudi Arabia,developer,"digital delivery; GIS; project controls","Large heritage-sensitive development program",https://www.diriyahcompany.sa/,B,not_contacted
+P28,Qiddiya Investment Company,Saudi Arabia,developer,"project controls; digital twin; GIS","Large multi-site development and reporting",https://qiddiya.com/,B,not_contacted
+P29,Saudi Downtown Company,Saudi Arabia,developer,"portfolio GIS; project controls","Multiple urban-development sites across Saudi cities",https://saudidowntown.com/,B,not_contacted
+P30,Saudi Aramco,Saudi Arabia,asset owner,"geospatial analytics; facilities planning","Large distributed asset base; stringent private deployment",https://www.aramco.com/,C,not_contacted
+P31,Space Imaging Middle East,UAE/Region,imagery/analytics,"solutions director; change-detection product owner","Public evidence of KSA change-reporting deployment",https://www.spaceimagingme.com/,A,not_contacted
+P32,Khatib & Alami,Region,engineering/geospatial,"geospatial systems director","Established GIS consultancy and potential channel",https://www.khatibalami.com/,A,not_contacted
+P33,Esri Saudi Arabia,Saudi Arabia,GIS vendor,"imagery/AI solutions lead","Market expert and possible distribution/integration channel",https://www.esrisaudiarabia.com/,B,not_contacted
+P34,Esri UAE,UAE,GIS vendor,"imagery/AI solutions lead","Market expert and enterprise GIS channel",https://www.esriuae.com/,B,not_contacted
+P35,Fugro Middle East,Region,surveying/geodata,"remote sensing or geospatial solutions manager","Geodata acquisition and monitoring services",https://www.fugro.com/,A,not_contacted
+P36,Egis Middle East,Region,engineering,"GIS manager; digital consulting lead","Regional planning, infrastructure, and job-market signal",https://www.egis-group.com/,B,not_contacted
+P37,Jacobs Middle East,Region,engineering,"geospatial director; project controls","Large infrastructure programs and digital delivery",https://www.jacobs.com/,B,not_contacted
+P38,TerraLab,France/Global,competitor,"founder or product lead","Direct QGIS pricing and workflow learning; competitor interview",https://terra-lab.ai/,C,not_contacted
+P39,Picterra,Switzerland/Global,competitor,"product or solutions lead","Mature change-detection platform and buyer-pattern insight",https://picterra.ai/,C,not_contacted
+P40,SATPALDA,India/Global,geospatial services,"solutions or business-development lead","Published construction-change case and service economics",https://satpalda.com/,B,not_contacted
+

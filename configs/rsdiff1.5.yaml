@@ -11,9 +11,9 @@ meta:
   version: rsdiff1.5
   reflects: "thesis actual base (27.2M, FID 66.49 lineage) + optimized SR"
   params_m: 119.9
-  fid_expected: null          # base reproduces LR-128 66.49; 256² cascade TBD
-  fid_measured: null
-  notes: "path B: base seeded+frozen from LR run, train SR only."
+  fid_expected: 65.70
+  fid_measured: 65.70
+  notes: "released merged SR ep650 checkpoint; FID-2048 on 1093 RSICD test images, cond_scale=5."
 
 data:
   name: rsicd

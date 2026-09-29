@@ -26,7 +26,8 @@ The local layout is `data/RSICD_optimal/imgs/*.jpg` + `dataset_rsicd.csv`. See [
 Sample 16 captions from the RSICD test split with the released cascade:
 
 ```bash
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o ddpm/ckpts/
+hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt \
+  --local-dir ddpm/ckpts/
 
 python ddpm/sample_grid.py \
   --log_dir ddpm/logs/full_sr_gdm \

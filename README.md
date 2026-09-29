@@ -54,7 +54,8 @@ A larger 723 M-parameter configuration ([`configs/rsdiff1.yaml`](configs/rsdiff1
 Sample 16 captions from the RSICD test split with the released cascade:
 
 ```bash
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt -o ddpm/ckpts/
+hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt \
+  --local-dir ddpm/ckpts/
 
 python ddpm/sample_grid.py \
   --log_dir ddpm/logs/full_sr_gdm \
@@ -86,6 +87,10 @@ bash scripts/cloud/vast_run.sh             # end-to-end train + snapshot
 ```
 
 A `diffusers`-native trainer is in active development under [`src/rsdiff/`](src/rsdiff/) — until then, the cascade scripts above are the reference.
+
+The canonical research and commercial-validation sequence is in
+[`docs/PLAN.md`](docs/PLAN.md). Commercial use must also account for the unresolved
+dataset and third-party rights recorded in [`docs/LICENSE_AUDIT.md`](docs/LICENSE_AUDIT.md).
 
 
 ## Evaluation
