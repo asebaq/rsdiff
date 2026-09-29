@@ -1,0 +1,24 @@
+candidate_id,algorithm_confidence,area_m2,score_p90,review_state,change_type,review_note
+new_capital_south_holdout-v2-0001,high,420700.0,11.179,rejected,rejected,"fragmented aggregate across established neighbourhood; mixed roof and landscaping tone, no contiguous rubric event"
+new_capital_south_holdout-v2-0002,high,134000.0,12.236,accepted,large_structural_footprint,new building cluster and site works appear east of existing blocks
+new_capital_south_holdout-v2-0003,high,29000.0,12.51,accepted,large_structural_footprint,new curved row of grey roofs replaces bare ground inside ring compound
+new_capital_south_holdout-v2-0004,high,25400.0,15.476,rejected,rejected,brightness change on existing linear corridor; no new structure
+new_capital_south_holdout-v2-0005,high,53900.0,13.172,accepted,large_laydown_or_stockpile_change,bright consolidated pad replaces mixed debris in existing works yard
+new_capital_south_holdout-v2-0006,high,116600.0,13.45,rejected,rejected,established neighbourhood; tonal landscaping and shadow differences only
+new_capital_south_holdout-v2-0007,high,42400.0,9.107,accepted,large_structural_footprint,new building row appears in eastern block
+new_capital_south_holdout-v2-0008,high,108000.0,12.92,accepted,road_network_formation,new curved road loop appears west of existing compound
+new_capital_south_holdout-v2-0009,high,24400.0,17.767,rejected,rejected,tonal change along existing road verge
+new_capital_south_holdout-v2-0010,high,23100.0,13.39,accepted,large_structural_footprint,new elongated structure and radial works inside ring compound
+new_capital_south_holdout-v2-0011,high,12400.0,8.052,rejected,rejected,small tonal patch without clear structure
+new_capital_south_holdout-v2-0012,high,234600.0,12.301,rejected,rejected,"diffuse soft-edged brightening; dust, haze or sand brightness cannot be excluded"
+new_capital_south_holdout-v2-0013,high,13400.0,9.489,rejected,rejected,artefact along no-data crop edge
+new_capital_south_holdout-v2-0014,high,48200.0,13.457,rejected,rejected,tonal change along existing road verge; not a laydown
+new_capital_south_holdout-v2-0015,high,29100.0,11.416,accepted,large_laydown_or_stockpile_change,grey works yard disappears and is replaced by darker surface
+new_capital_south_holdout-v2-0016,medium,10100.0,6.553,rejected,rejected,no visible change at rubric scale
+new_capital_south_holdout-v2-0017,medium,11400.0,6.698,rejected,rejected,diffuse tonal change; new track lies outside polygon
+new_capital_south_holdout-v2-0018,high,48400.0,14.877,accepted,large_laydown_or_stockpile_change,new bright graded pad appears in open desert
+new_capital_south_holdout-v2-0019,high,23200.0,8.273,rejected,rejected,diffuse tonal change without clear construction form
+new_capital_south_holdout-v2-0020,high,46800.0,10.118,accepted,road_network_formation,new graded east-west corridor joins existing road
+new_capital_south_holdout-v2-0021,high,98500.0,10.801,accepted,major_clearing_or_grading,new graded pad inside planned block; tail follows south data edge
+new_capital_south_holdout-v2-0022,high,12000.0,11.055,rejected,rejected,bright feature truncated at south data edge; cannot classify reliably
+new_capital_south_holdout-v2-0023,high,13900.0,9.315,rejected,rejected,artefact along south no-data edge
