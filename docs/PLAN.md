@@ -33,6 +33,14 @@ Online validation comes first: compare candidate jobs, select one narrow claim, 
 produce a public-data manual demo. The current comparison and demo protocol are in
 [`commercial/a1/online-candidate-review.md`](commercial/a1/online-candidate-review.md).
 
+Demo status, 2026-09-29: the Egypt public-data demo has not passed. Four frozen
+Sentinel methods were evaluated. v2 (optical, 76.47%), v3 (three-date persistence,
+62.5%), and v4 (Sentinel-1 backscatter corroboration, 16.67% usefulness and 10% recall)
+were each scored on a fresh holdout AOI; v1 (18.52%) had no holdout. The pending
+decision is to change the target resolution, reframe the claim as analyst triage, or
+stop. See
+[`commercial/a2/egypt-monitoring/change-result-v4.md`](commercial/a2/egypt-monitoring/change-result-v4.md).
+
 Interviews are postponed until the online demo passes its acceptance test. Commercial
 validation still requires 5 interviews describing the same recurring job, 3
 quantifying its cost, 3 sharing a sanitized example, 2 identifying the buyer, and 1

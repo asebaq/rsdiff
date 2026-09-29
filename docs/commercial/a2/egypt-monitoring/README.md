@@ -22,6 +22,7 @@ not administrative boundaries.
 | `new_cairo_mostakbal` | Mostakbal / eastern New Cairo growth area | 46 km² | Large residential and road development with desert contrast and continuing build-out |
 | `new_capital_core` | New Capital CBD–government corridor | 47 km² | Large structures, roads, and earthworks; NASA has already demonstrated multi-year Landsat observation of the capital |
 | `new_capital_east_holdout` | New Capital eastern holdout | 47 km² | Adjacent unseen area reserved for three-date v3 evaluation |
+| `new_capital_south_holdout` | New Capital southern holdout | 47 km² | Unseen AOI directly south of the core, reserved for the v4 Sentinel-1 evaluation |
 
 The Mostakbal location is anchored by the public Google Maps place result at
 approximately 30.0496° N, 31.6140° E. The New Capital location is cross-checked against
@@ -163,6 +164,27 @@ Version 3 tests three-date persistence on a new eastern New Capital holdout. See
 [`change-method-v3.md`](change-method-v3.md),
 [`change-result-v3.md`](change-result-v3.md), and the tracked
 [`review-decisions-v3-holdout.csv`](review-decisions-v3-holdout.csv).
+
+Version 4 adds Sentinel-1 RTC backscatter corroboration on a fourth, unseen
+`new_capital_south_holdout` AOI. See [`change-method-v4.md`](change-method-v4.md),
+[`change-result-v4.md`](change-result-v4.md), and the blind
+[`review-decisions-v4-south.csv`](review-decisions-v4-south.csv). It failed:
+16.67% usefulness and 10% recall. Reproduce it with:
+
+```bash
+python scripts/commercial/corroborate_sar_v4.py \
+  --crop-manifest data/commercial/egypt-monitoring/south-derived/crop-manifest.csv \
+  --source-manifest docs/commercial/a2/egypt-monitoring/source-manifest.csv \
+  --v2-candidates data/commercial/egypt-monitoring/change-v2-south/change-candidates.geojson \
+  --aoi-id new_capital_south_holdout \
+  --sar-dir data/commercial/egypt-monitoring/sar \
+  --output-dir data/commercial/egypt-monitoring/change-v4-south \
+  --review-csv docs/commercial/a2/egypt-monitoring/review-decisions-v4-south.csv
+```
+
+Sentinel-only methods have now failed the 80% gate on three fresh AOIs. The next step
+is a PLAN step-7 decision: move to a finer target resolution, reframe the claim as
+analyst triage, or stop. Do not start a v5 threshold search.
 
 Prepare numbered review cards and the controlled review CSV with:
 
