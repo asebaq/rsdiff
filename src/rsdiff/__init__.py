@@ -1,3 +1,3 @@
-"""rsdiff — diffusion models for remote sensing imagery."""
+"""RSDiff: text-to-satellite-image diffusion."""
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"

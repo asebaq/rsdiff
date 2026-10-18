@@ -46,12 +46,7 @@ fi
 # Smoke imports.
 python - <<'PY'
 import importlib
-mods = ["torch", "diffusers", "transformers", "accelerate", "rsdiff"]
-try:
-    import imagen_pytorch  # noqa: F401
-    mods.append("imagen_pytorch")
-except ModuleNotFoundError:
-    pass
+mods = ["torch", "transformers", "accelerate", "imagen_pytorch", "rsdiff"]
 for m in mods:
     mod = importlib.import_module(m)
     print(f"{m:16s} {getattr(mod, '__version__', '?')}")
@@ -84,5 +79,5 @@ echo "  # Legacy thesis repro (smoke run, ~2-4hr on A6000):"
 echo "  bash ddpm/scripts/run_smoke.sh"
 echo "  # Full LR-GDM run (multi-day):"
 echo "  bash ddpm/scripts/lunch_training.sh"
-echo "  # New rsdiff package (trainer is NotImplementedError until M1):"
-echo "  accelerate config && rsdiff train --config configs/rsicd_text_128.yaml"
+echo "  # Sample the released cascade with the package CLI:"
+echo "  rsdiff sample --rsicd data/RSICD_optimal -n 16 --out-dir outputs/samples"

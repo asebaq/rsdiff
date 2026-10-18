@@ -51,4 +51,4 @@ A machine-readable [`CITATION.cff`](https://github.com/asebaq/rsdiff/blob/main/C
 
 ## License
 
-Apache 2.0. See [`LICENSE`](https://github.com/asebaq/rsdiff/blob/main/LICENSE).
+Code: Apache 2.0. See [`LICENSE`](https://github.com/asebaq/rsdiff/blob/main/LICENSE). The released weights were trained on RSICD, whose commercial terms are unresolved; see [`docs/LICENSE_AUDIT.md`](https://github.com/asebaq/rsdiff/blob/main/docs/LICENSE_AUDIT.md).

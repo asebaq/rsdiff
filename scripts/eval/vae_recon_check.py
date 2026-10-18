@@ -10,6 +10,7 @@ Decision rule baked into the README at top of `.notes/vae_recon_check_*.md`:
 
 Reference numbers (SD-1.5 VAE on COCO): PSNR ~25.7, LPIPS ~0.10.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -98,19 +99,27 @@ def run(
                 grid_recon.append(b01[j])
             counter += 1
         if lpips_fn is not None:
-            with torch.amp.autocast(device_type=device, dtype=dtype, enabled=(dtype != torch.float32)):
+            with torch.amp.autocast(
+                device_type=device, dtype=dtype, enabled=(dtype != torch.float32)
+            ):
                 lp = lpips_fn(x.float(), xr.float()).detach().cpu().flatten().tolist()
             lpipses.extend(lp)
         del a01, b01, x, z, xr, imgs
         if (i // batch) % 5 == 0:
-            print(f"  [{size}px] {i + len(chunk)}/{len(paths)}  t={time.time() - t0:.1f}s", flush=True)
+            print(
+                f"  [{size}px] {i + len(chunk)}/{len(paths)}  t={time.time() - t0:.1f}s", flush=True
+            )
     return {
         "size": size,
         "n": len(paths),
         "psnr_mean": sum(psnrs) / len(psnrs),
         "psnr_std": (sum((p - sum(psnrs) / len(psnrs)) ** 2 for p in psnrs) / len(psnrs)) ** 0.5,
         "lpips_mean": (sum(lpipses) / len(lpipses)) if lpipses else None,
-        "lpips_std": ((sum((l - sum(lpipses) / len(lpipses)) ** 2 for l in lpipses) / len(lpipses)) ** 0.5) if lpipses else None,
+        "lpips_std": (
+            (sum((x - sum(lpipses) / len(lpipses)) ** 2 for x in lpipses) / len(lpipses)) ** 0.5
+        )
+        if lpipses
+        else None,
         "wallclock_s": round(time.time() - t0, 1),
         "_grid_orig": torch.stack(grid_orig) if grid_orig else None,
         "_grid_recon": torch.stack(grid_recon) if grid_recon else None,
@@ -160,7 +169,11 @@ def main():
 
     args.out.mkdir(parents=True, exist_ok=True)
 
-    device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
+    device = (
+        "cuda"
+        if torch.cuda.is_available()
+        else ("mps" if torch.backends.mps.is_available() else "cpu")
+    )
     dtype = torch.float16 if device == "cuda" else torch.float32
     print(f"device={device}  dtype={dtype}", flush=True)
 

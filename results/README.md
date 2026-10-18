@@ -19,7 +19,7 @@ bundles (PNGs) are too large for git and live on the
 
 | Metric | Value |
 | --- | --- |
-| **FID** (cascade-256, N=1093, feature=2048) | **65.70** |
+| **FID** (torchmetrics Inception, feature=2048, both sides at 256, N=1093) | **65.70** |
 | FID (feature=768) | 0.275 |
 | **CLIP-score** (OpenAI ViT-B/32) | **0.278** |
 | CLIP-score shuffled baseline | 0.232 |
@@ -28,3 +28,6 @@ bundles (PNGs) are too large for git and live on the
 The SR sweep and LR sweep are scored at `cond_scale=4`. The CFG sweep was
 scored at N=64 (a cheap pre-headline picker — ranking-only; N=64 FID is
 upward-biased compared to the N=1093 headline).
+
+Regenerate and rescore the headline bundle with `rsdiff sample` and `rsdiff eval`; see
+[`../docs/reproducibility.md`](../docs/reproducibility.md).

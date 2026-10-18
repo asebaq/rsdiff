@@ -23,9 +23,11 @@ caption  ──▶ T5-base ──┬──▶ LR base UNet (128²)  ──▶  x
 | **LR base UNet** | 128² | 27.18 M | T5-base cross-attn, `p_uncond=0.1` | `dim=128`, `cond_dim=256`, `dim_mults=(1,2,2,2)`, attention-only |
 | **SR UNet** | 128 → 256 | 92.66 M | T5-base + LR image, `p_uncond=0.1` | `dim=128`, `cond_dim=512`, `dim_mults=(1,2,3,4)`, `num_resnet_blocks=(2,2,2,2)` |
 | **T5-base** | — | 220 M (frozen) | — | — |
-| **Cascade total** | | **119.9 M** | | |
+| **Cascade total** | | **119.9 M**[^params] | | |
 
-A larger 723 M-parameter configuration ([`configs/rsdiff1.yaml`](https://github.com/asebaq/rsdiff/blob/main/configs/rsdiff1.yaml)) shares the same code path; weights are not yet released.
+A larger 723 M-parameter configuration ([`src/rsdiff/configs/rsdiff1.yaml`](https://github.com/asebaq/rsdiff/blob/main/src/rsdiff/configs/rsdiff1.yaml)) shares the same code path; weights are not yet released.
+
+[^params]: 119.9 M counts the two standalone UNets. Loaded inside the cascade, the SR UNet gains low-resolution conditioning layers (105.0 M), so the cascade holds 132.2 M trainable parameters, plus the frozen T5-base text encoder.
 
 ## Dataset
 

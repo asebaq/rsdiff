@@ -1,8 +1,8 @@
-# RSDiff research and commercial validation plan
+# RSDiff research plan
 
-This is the canonical execution plan. The released model and a possible commercial
-geospatial product are separate tracks. Neither track depends on the other until
-evidence justifies integration.
+This is the canonical execution plan for RSDiff. Commercial monitoring validation
+(formerly Track A) lives in the separate `geo-monitor-core` repository; neither project
+depends on the other until evidence justifies integration.
 
 ## Invariants
 
@@ -10,70 +10,14 @@ evidence justifies integration.
   128→256 cascade with FID 65.70 and CLIP-score 0.278 on 1,093 RSICD test images.
 - `ddpm/` remains the reference implementation until another implementation reproduces
   its sampling behavior and evaluation metrics.
-- Operational monitoring uses observed imagery and deterministic analysis. Generated
-  imagery is never represented as observation or prediction.
-- No QGIS plugin is built until two manual pilots expose the same repeated interaction.
-- RSDiff enters a commercial workflow only after an untouched real-data evaluation
-  shows downstream benefit.
+- Generated imagery is never represented as observation or prediction.
+- Commercial work lives in `geo-monitor-core`. RSDiff enters a commercial workflow only
+  after an untouched real-data evaluation shows downstream benefit.
 
 ## Track A — commercial validation
 
-### A1. Evidence and access — desk artifacts complete 2026-08-29
-
-Deliverables:
-
-- 30 independent, dated demand signals: public questions, issues, jobs, tenders, case
-  studies, competitors, and price anchors;
-- 40 reachable prospective users or buyers;
-- interview guide centered on the respondent's last completed monitoring job;
-- one example deliverable containing before/after evidence, editable polygons,
-  confidence, and an Arabic/English report.
-
-Online validation comes first: compare candidate jobs, select one narrow claim, and
-produce a public-data manual demo. The current comparison and demo protocol are in
-[`commercial/a1/online-candidate-review.md`](commercial/a1/online-candidate-review.md).
-
-Demo status, 2026-09-29: the Egypt public-data demo has not passed. Four frozen
-Sentinel methods were evaluated. v2 (optical, 76.47%), v3 (three-date persistence,
-62.5%), and v4 (Sentinel-1 backscatter corroboration, 16.67% usefulness and 10% recall)
-were each scored on a fresh holdout AOI; v1 (18.52%) had no holdout. The pending
-decision is to change the target resolution, reframe the claim as analyst triage, or
-stop. See
-[`commercial/a2/egypt-monitoring/change-result-v4.md`](commercial/a2/egypt-monitoring/change-result-v4.md).
-
-Interviews are postponed until the online demo passes its acceptance test. Commercial
-validation still requires 5 interviews describing the same recurring job, 3
-quantifying its cost, 3 sharing a sanitized example, 2 identifying the buyer, and 1
-accepting a manual or paid pilot. Desk research and a demo cannot establish willingness
-to pay or access to internal workflows.
-
-The initial desk artifacts are tracked under [`commercial/a1/`](commercial/a1/).
-The phase remains open until the interview criteria above are met; organizations in the
-prospect list have not been contacted or endorsed the concept.
-
-### A2. Concierge pilot
-
-Test construction-progress or unauthorized-building monitoring without a plugin:
-
-```text
-before/after GeoTIFF
-  → registration
-  → narrow change inference
-  → polygon extraction
-  → analyst correction
-  → GeoPackage/GeoJSON + bilingual report
-```
-
-Measure analyst time, false positives, missed changes, correction time, and whether the
-output satisfies the customer's acceptance process. Continue if two pilots show a
-repeatable workflow and at least 50% analyst-time reduction.
-
-### A3. Product shell
-
-Build algorithms as an application-neutral `geo-monitor-core`. Add a thin QGIS plugin
-only for layer selection, AOI selection, job status, polygon review, and export. Keep
-CLI, web, ArcGIS, and Blender adapters possible without moving core behavior into UI
-code.
+Moved to the separate `geo-monitor-core` repository, including its plan, evidence,
+experiments, and kill conditions.
 
 ## Track B — RSDiff
 
@@ -115,18 +59,10 @@ degrading important subgroups. FID improvement alone does not qualify.
 ## Current order
 
 1. Finish B1.
-2. Complete the online candidate review and one-week public-data validation demo; do
-   not implement a plugin.
-3. Run B2.
-4. If the online demo passes, begin interviews and seek one A2 manual pilot.
-5. Run B3 only after B2 is stable.
-6. Decide independently whether each track continues.
+2. Run B2.
+3. Run B3 only after B2 is stable.
 
 ## Kill conditions
 
-- Customers buy imagery and analysis only as an inseparable incumbent service.
-- Imagery or dataset rights prohibit the intended processing or redistribution.
-- Affordable imagery cannot support the required accuracy.
-- Buyers value the result but will not fund it separately.
-- Required security, procurement, or support exceeds the project's capacity.
+- Imagery or dataset rights prohibit the intended training or redistribution.
 - Synthetic data does not improve evaluation on untouched real imagery.

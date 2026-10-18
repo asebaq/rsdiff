@@ -9,7 +9,7 @@ DEFAULT_RANDOM_SEED = 17
 
 def seed_basic(seed=DEFAULT_RANDOM_SEED):
     random.seed(seed)
-    os.environ['PYTHONHASHSEED'] = str(seed)
+    os.environ["PYTHONHASHSEED"] = str(seed)
     np.random.seed(seed)
 
 

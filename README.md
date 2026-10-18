@@ -1,127 +1,187 @@
-# RSDiff: Remote Sensing Image Generation from Text<br><sub>Official PyTorch Implementation</sub>
-
-[![Paper](https://img.shields.io/badge/DOI-10.1007%2Fs00521--024--10363--3-blue)](https://doi.org/10.1007/s00521-024-10363-3)
-[![Model](https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Model-yellow)](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650)
-[![License](https://img.shields.io/badge/License-Apache_2.0-green)](LICENSE)
+<h1 align="center">
+  <a href="https://github.com/asebaq/rsdiff">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/asebaq/rsdiff/main/docs/assets/cover_dark.svg">
+      <img alt="rsdiff" src="https://raw.githubusercontent.com/asebaq/rsdiff/main/docs/assets/cover_light.svg" width="640">
+    </picture>
+  </a>
+</h1>
 
 <p align="center">
-  <img src="docs/figures/sample_montage.png" width="780">
+  <a href="https://pypi.org/project/rsdiff/"><img alt="PyPI" src="https://img.shields.io/pypi/v/rsdiff?color=1D4ED8"></a>
+  <a href="https://pypi.org/project/rsdiff/"><img alt="Python" src="https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fasebaq%2Frsdiff%2Fmain%2Fpyproject.toml"></a>
+  <a href="https://github.com/asebaq/rsdiff/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/asebaq/rsdiff/actions/workflows/ci.yml/badge.svg"></a>
+  <a href="https://github.com/asebaq/rsdiff/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/asebaq/rsdiff"></a>
+  <a href="https://doi.org/10.1007/s00521-024-10363-3"><img alt="DOI" src="https://img.shields.io/badge/DOI-10.1007%2Fs00521--024--10363--3-blue"></a>
+  <a href="https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650"><img alt="Hugging Face model" src="https://img.shields.io/badge/Hugging%20Face-rsdiff--sr--cascade--ep650-yellow"></a>
 </p>
 
-> [**RSDiff: Remote Sensing Image Generation from Text Using Diffusion Model**](https://doi.org/10.1007/s00521-024-10363-3)<br>
-> [Ahmad Sebaq](https://github.com/asebaq), [Mohamed ElHelw](https://nu.edu.eg/)<br>
-> Center for Informatics Science, Nile University<br>
-> Neural Computing and Applications, 2024
+<p align="center">
+  <a href="#install"><strong>Install</strong></a> &middot;
+  <a href="#use"><strong>Use</strong></a> &middot;
+  <a href="#results"><strong>Results</strong></a> &middot;
+  <a href="#how-it-works"><strong>How it works</strong></a> &middot;
+  <a href="#limitations"><strong>Limitations</strong></a> &middot;
+  <a href="#training"><strong>Training</strong></a> &middot;
+  <a href="#roadmap"><strong>Roadmap</strong></a> &middot;
+  <a href="#citation"><strong>Citation</strong></a>
+</p>
 
-A T5-conditioned cascaded diffusion model for text-to-satellite-image generation at 256×256, trained on RSICD. The released cascade reaches **FID 65.70** and **CLIP-score 0.278** on the full RSICD test split (N=1,093, `cond_scale=5`).
+**Text-to-satellite-image diffusion, packaged.** rsdiff is the reference implementation
+of RSDiff ([Neural Computing and Applications, 2024](https://doi.org/10.1007/s00521-024-10363-3)):
+a T5-conditioned, Imagen-style cascaded diffusion model that turns a caption such as
+"many buildings and green trees are around a playground ." into a 256x256 synthetic
+remote-sensing image. One command downloads the released RSICD-trained checkpoint,
+verifies it, and samples; a second scores the result with the same FID and CLIP-score
+protocol used for the published numbers (FID 65.70, CLIP-score 0.278 on the full
+RSICD test split).
 
-This repository contains:
+Every image rsdiff produces is synthetic. It is not an observation or a prediction of
+any real place, and each PNG says so in its metadata.
 
-* A PyTorch [implementation](ddpm/) of the two-stage Imagen-style cascade (T5-base → 128² base UNet → 256² SR UNet)
-* Pre-trained 120 M-parameter cascade weights on [HF Hub](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650)
-* A self-contained [sampling script](ddpm/sample_grid.py) for the released checkpoint
-* FID + CLIP-score [evaluation pipeline](scripts/eval/) reproducing every number in [`docs/REPORT.md`](docs/REPORT.md)
-* Cloud-GPU [orchestration scripts](scripts/cloud/) (vast.ai / RunPod) for end-to-end training and evaluation
+<p align="center">
+  <img src="https://raw.githubusercontent.com/asebaq/rsdiff/main/docs/figures/sample_montage.png" width="780" alt="Synthetic 256x256 samples generated from RSICD test captions">
+</p>
 
-
-## Setup
-
-```bash
-git clone https://github.com/asebaq/rsdiff
-cd rsdiff
-uv venv && source .venv/bin/activate
-uv pip install -e ".[dev,eval]"
-```
-
-Place the RSICD dataset (10,921 image–caption pairs) at `data/RSICD_optimal/`. See [`docs/reproducibility.md`](docs/reproducibility.md) for dataset preparation.
-
-
-## Pre-trained Models
-
-Released checkpoint, on the RSICD test split (1,093 images, Inception feature=2048, cascade-256, `cond_scale=5`):
-
-| Model | Resolution | FID ↓ | CLIP ↑ | Params | Weights |
-|---|---|---|---|---|---|
-| **RSDiff Cascade** | 256² | **65.70** | **0.278** | 119.9 M | [🤗 `asebaq/rsdiff-sr-cascade-ep650`](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650) |
-
-CLIP shuffled-caption null baseline = 0.232 → text-image alignment lift **+0.046**.
-
-A larger 723 M-parameter configuration ([`configs/rsdiff1.yaml`](configs/rsdiff1.yaml)) shares the same code path; weights are not yet released.
-
-
-## Sampling
-
-Sample 16 captions from the RSICD test split with the released cascade:
+## Install
 
 ```bash
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt \
-  --local-dir ddpm/ckpts/
-
-python ddpm/sample_grid.py \
-  --log_dir ddpm/logs/full_sr_gdm \
-  --data_root data/RSICD_optimal \
-  --ckpt ddpm/ckpts/ckpt_sr_ep650_step89050.pt \
-  --n 16 --cols 4 --batch 2 --cond_scale 5.0 \
-  --img_sz 128 --sr_sz 256 --ts 1000 \
-  --sr --split test --seed 17
+pip install rsdiff            # sampling + CLIP-score
+pip install "rsdiff[eval]"    # adds torchmetrics for FID
 ```
 
+Python 3.10+. Sampling runs on CUDA when available and otherwise on CPU. Apple MPS is
+not supported: imagen-pytorch 2.1.0 and the torchmetrics FID both use float64.
+
+## Use
+
+Generate images from your own captions. The first run downloads the released checkpoint
+(1.9 GB, pinned Hugging Face revision) and verifies its SHA-256:
+
+```bash
+rsdiff sample --prompt "many buildings and green trees are around a playground ." -n 4 --out-dir generated
+```
+
+This writes 256x256 PNGs and a `captions.txt` to `generated/`. `--prompt` can be
+repeated. Each PNG carries `Software`, `Description` (a synthetic-content notice), and
+`Prompt` text chunks.
+
+Or draw captions from RSICD (first caption, `sent1`, shuffled with `--seed`, default 17):
+
+```bash
+rsdiff sample --rsicd data/RSICD_optimal --split test -n 16 --out-dir generated
+```
+
+Useful options: `--cond-scale` (default 5), `--batch-size` (default 2), `--lr-only`
+(stop at the 128x128 base stage), `--cpu`, `--config rsdiff1.5|rsdiff1|path.yaml`, and
+`--checkpoint PATH` (required for non-default configs). An interrupted run resumes:
+batches whose PNGs already exist are skipped.
+
+Score a generated directory against the RSICD test split:
+
+```bash
+rsdiff eval fid generated --rsicd data/RSICD_optimal    # --feature 2048 --size 256 by default
+rsdiff eval clip generated                             # clip_score, clip_score_shuffled, delta
+```
+
+Both print JSON. The same pieces are available from Python:
+
+```python
+from rsdiff.cascade import download_release, generate, load_cascade
+from rsdiff.config import load_preset
+from rsdiff.eval import clip_score
+
+cfg = load_preset("rsdiff1.5")
+trainer = load_cascade(cfg, download_release())
+paths = generate(trainer.sample, ["a river runs through the green farmland ."], "generated")
+print(clip_score("generated"))
+```
+
+`rsdiff.datasets.rsicd.sample_captions` reproduces the CLI's RSICD caption draw, and
+`rsdiff.eval.fid` computes FID.
+
+## Results
+
+Released checkpoint, full RSICD test split (N=1,093), cascade output at 256x256,
+`cond_scale=5`:
+
+| Metric | Value |
+| --- | --- |
+| FID (torchmetrics Inception, feature 2048, both sides at 256) | **65.70** |
+| CLIP-score (OpenAI CLIP ViT-B/32) | **0.278** |
+| CLIP-score, shuffled-caption baseline | 0.232 |
+| Parameters (base UNet 27.2 M + SR UNet 92.7 M) | 119.9 M[^params] |
+
+[^params]: 119.9 M counts the two standalone UNets, as in the paper and model card.
+    Loaded inside the cascade, the SR UNet gains low-resolution conditioning layers
+    (105.0 M), so the cascade holds 132.2 M trainable parameters, plus the frozen T5-base
+    text encoder.
+
+The CLIP-score sits 0.046 above the shuffled-caption baseline: the images follow their
+captions, not just the RSICD domain.
+
+| Curve | Figure |
+| --- | --- |
+| SR FID versus epoch (ep150 to ep1000) | [`docs/figures/sr_fid_curve.png`](docs/figures/sr_fid_curve.png) |
+| CFG `cond_scale` sweep on the selected SR milestone | [`docs/figures/cfg_sweep.png`](docs/figures/cfg_sweep.png) |
+| LR base FID versus epoch | [`docs/figures/lr_fid_curve.png`](docs/figures/lr_fid_curve.png) |
+
+The numbers behind every figure are committed in [`results/`](results/). Methodology and
+discussion: [`docs/REPORT.md`](docs/REPORT.md). Model card:
+[`docs/model_card.md`](docs/model_card.md).
+
+## How it works
+
+1. A frozen **T5-base** encoder turns the caption into token embeddings.
+2. A **128x128 base UNet** denoises from noise over 1,000 DDPM steps, cross-attending to
+   the text.
+3. A **256x256 super-resolution UNet** denoises again, conditioned on the text and the
+   upsampled base image.
+
+Both stages use classifier-free guidance (trained with 10% caption dropout) with a shared
+`cond_scale`; 5 is the value selected by the CFG sweep and used for every headline
+number. Sampling uses the EMA weights of the merged epoch-650 checkpoint. The presets
+ship inside the package: [`rsdiff1.5`](src/rsdiff/configs/rsdiff1.5.yaml) (released) and
+[`rsdiff1`](src/rsdiff/configs/rsdiff1.yaml) (the 723 M paper configuration; weights not
+released).
+
+## Limitations
+
+- **Synthetic only.** Outputs are plausible-looking imagery, not observed or predicted
+  geography. Do not use them as evidence about a real location.
+- **RSICD domain.** The model was trained on the 30 RSICD scene types and their short,
+  lowercase captions. Prompts unlike those captions have not been evaluated.
+- **256 px.** The cascade stops at 256x256.
+- **No Apple MPS.** float64 operations in imagen-pytorch 2.1.0 and torchmetrics FID are
+  not supported on MPS.
+- **CPU sampling is slow.** 2,000 denoising steps per image took about an hour on an
+  Apple-silicon CPU; use a CUDA GPU for more than a handful of images.
+- **Weights not commercially cleared.** RSICD's commercial terms are unresolved; see
+  [`docs/LICENSE_AUDIT.md`](docs/LICENSE_AUDIT.md).
 
 ## Training
 
-Two-phase decoupled-cascade training. LR base first, then SR on top of the frozen LR base:
+Training still runs through the frozen reference implementation in [`ddpm/`](ddpm/):
 
 ```bash
-# Phase 1 — 128² LR base UNet, 1000 epochs
-bash ddpm/scripts/run_training_local.sh
-
-# Phase 2 — 256² SR UNet (frozen LR base, GT-low-res conditioning), 1000 epochs
-bash ddpm/scripts/run_sr.sh
+bash ddpm/scripts/run_training_local.sh   # stage 1: 128x128 base UNet
+bash ddpm/scripts/run_sr.sh               # stage 2: 256x256 SR UNet on the frozen base
 ```
 
-For cloud-GPU runs (vast.ai / RunPod):
+[`docs/reproducibility.md`](docs/reproducibility.md) is the complete runbook: environment,
+dataset preparation, training, milestone sweeps, sampling the 1,093-image bundle, and
+scoring.
 
-```bash
-bash scripts/cloud/vast_setup.sh           # provisions env + dataset
-bash scripts/cloud/vast_run.sh             # end-to-end train + snapshot
-```
+## Roadmap
 
-A `diffusers`-native trainer is in active development under [`src/rsdiff/`](src/rsdiff/) — until then, the cascade scripts above are the reference.
+1. **Reproduce with the package.** Regenerate the 1,093-image bundle with `rsdiff sample`
+   and match the published FID and CLIP-score; then delete `ddpm/`.
+2. **Commercial relevance.** Test whether synthetic augmentation improves a downstream
+   model on an untouched real-data test set.
 
-The canonical research and commercial-validation sequence is in
-[`docs/PLAN.md`](docs/PLAN.md). Commercial use must also account for the unresolved
-dataset and third-party rights recorded in [`docs/LICENSE_AUDIT.md`](docs/LICENSE_AUDIT.md).
-
-
-## Evaluation
-
-FID over the full RSICD test split (N=1,093) on the best SR milestone with `cond_scale=5`:
-
-```bash
-bash scripts/eval/sr_final_1093.sh         # generate 1093-image bundle
-bash scripts/eval/fid_sweep.sh             # FID at feature=2048 + feature=768
-bash scripts/eval/sr_clip_score.sh         # CLIP score + shuffled-caption null
-```
-
-Per-milestone FID sweep, CFG `cond_scale` ablation, and the full tech report:
-
-| Curve | Figure |
-|---|---|
-| SR FID-vs-epoch (ep50–1000) | [`docs/figures/sr_fid_curve.png`](docs/figures/sr_fid_curve.png) |
-| CFG `cond_scale` sweep on best SR milestone | [`docs/figures/cfg_sweep.png`](docs/figures/cfg_sweep.png) |
-| LR-base FID-vs-epoch sweep | [`docs/figures/lr_fid_curve.png`](docs/figures/lr_fid_curve.png) |
-
-Committed numerics: [`results/`](results/). Full methodology, curves, and discussion: [`docs/REPORT.md`](docs/REPORT.md). End-to-end reproducibility runbook (env, training, sweeps, costs): [`docs/reproducibility.md`](docs/reproducibility.md).
-
-
-## Acknowledgments
-
-This implementation builds on `lucidrains/imagen-pytorch` for the cascade scaffolding and the HuggingFace `datasets` mirror of RSICD. The 2024 paper was developed at the Center for Informatics Science, Nile University.
-
+Details and acceptance criteria: [`docs/PLAN.md`](docs/PLAN.md).
 
 ## Citation
-
-If you use this code or the released weights, please cite:
 
 ```bibtex
 @article{sebaq2024rsdiff,
@@ -136,7 +196,10 @@ If you use this code or the released weights, please cite:
 }
 ```
 
-
 ## License
 
-Apache-2.0. See [`LICENSE`](LICENSE).
+Code: Apache-2.0, see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE). The released weights
+were trained on RSICD, whose commercial terms are unresolved; dataset, dependency, and
+derived-weight rights are tracked in [`docs/LICENSE_AUDIT.md`](docs/LICENSE_AUDIT.md).
+Built on [`lucidrains/imagen-pytorch`](https://github.com/lucidrains/imagen-pytorch);
+developed at the Center for Informatics Science, Nile University.

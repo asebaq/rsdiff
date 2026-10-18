@@ -3,72 +3,67 @@
 ## Installation
 
 ```bash
-git clone https://github.com/asebaq/rsdiff
-cd rsdiff
-uv venv && source .venv/bin/activate
-uv pip install -e ".[dev,eval]"
+pip install rsdiff            # sampling + CLIP-score
+pip install "rsdiff[eval]"    # adds torchmetrics for FID
 ```
 
-Requires Python ≥ 3.10. The `[eval]` extra adds `clean-fid`, `transformers`, and `torchmetrics[image]` for the FID + CLIP-score pipeline.
+Requires Python ≥ 3.10. Sampling runs on CUDA when available and otherwise on CPU (slow:
+2,000 denoising steps per image). Apple MPS is not supported: imagen-pytorch 2.1.0 and
+the torchmetrics FID use float64.
 
-## Dataset
-
-Place the RSICD dataset (10,921 image–caption pairs) at `data/RSICD_optimal/`:
-
-```bash
-bash scripts/cloud/vast_setup.sh --download-rsicd     # downloads HF mirror + writes the local-format CSV
-```
-
-The local layout is `data/RSICD_optimal/imgs/*.jpg` + `dataset_rsicd.csv`. See [`docs/reproducibility.md`](https://github.com/asebaq/rsdiff/blob/main/docs/reproducibility.md) for the full dataset-prep walkthrough.
+For development, clone the repository and run `uv sync`, then `uv run pytest -q`.
 
 ## Sampling
 
-Sample 16 captions from the RSICD test split with the released cascade:
-
 ```bash
-hf download asebaq/rsdiff-sr-cascade-ep650 ckpt_sr_ep650_step89050.pt \
-  --local-dir ddpm/ckpts/
-
-python ddpm/sample_grid.py \
-  --log_dir ddpm/logs/full_sr_gdm \
-  --data_root data/RSICD_optimal \
-  --ckpt ddpm/ckpts/ckpt_sr_ep650_step89050.pt \
-  --n 16 --cols 4 --batch 2 --cond_scale 5.0 \
-  --img_sz 128 --sr_sz 256 --ts 1000 \
-  --sr --split test --seed 17
+rsdiff sample --prompt "many buildings and green trees are around a playground ." -n 4 --out-dir generated
 ```
 
-Outputs land in `<log_dir>/generated_images/grid_step89050/`:
+The first run downloads the released checkpoint (1.9 GB) from
+[`asebaq/rsdiff-sr-cascade-ep650`](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650)
+at a pinned revision and verifies its SHA-256. Outputs in `generated/`:
 
-- `00_<caption_slug>.png`, `01_…` per-image samples
-- `_grid.png` 4×4 grid
-- `captions.txt` prompts in order
+- one 256×256 PNG per image, named `<index>_<caption_slug>.png`
+- `captions.txt`, one prompt per line in file order
+
+Every image is synthetic, not an observation or prediction of a real place. Each PNG
+carries `Software`, `Description` (a synthetic-content notice), and `Prompt` text chunks.
+
+`--prompt` can be repeated. To sample RSICD captions instead (first caption per image,
+shuffled with `--seed`, default 17):
+
+```bash
+rsdiff sample --rsicd data/RSICD_optimal --split test -n 16 --out-dir generated
+```
+
+| Option | Default | Meaning |
+|---|---|---|
+| `--cond-scale` | 5 | classifier-free guidance scale, both stages |
+| `--batch-size` | 2 | images per sampling batch |
+| `--lr-only` | off | stop at the 128×128 base stage |
+| `--cpu` | off | force CPU |
+| `--config` | `rsdiff1.5` | preset name (`rsdiff1.5`, `rsdiff1`) or YAML path |
+| `--checkpoint` | released | checkpoint path; required for non-default configs |
+
+Interrupted runs resume: batches whose PNGs already exist are skipped.
 
 ### Python API
 
 ```python
-import torch
-from imagen_pytorch import Imagen, ImagenTrainer, Unet
-from huggingface_hub import hf_hub_download
+from rsdiff.cascade import download_release, generate, load_cascade
+from rsdiff.config import load_preset
 
-ckpt = hf_hub_download("asebaq/rsdiff-sr-cascade-ep650",
-                       "ckpt_sr_ep650_step89050.pt")
-base = Unet(dim=128, cond_dim=256, dim_mults=(1,2,2,2),
-            num_resnet_blocks=0,
-            layer_attns=(False, True, True, True),
-            layer_cross_attns=(False, True, True, True))
-sr = Unet(dim=128, cond_dim=512, dim_mults=(1,2,3,4),
-          num_resnet_blocks=(2,2,2,2))
-imagen = Imagen(text_encoder_name="t5-base",
-                unets=(base, sr),
-                image_sizes=(128, 256),
-                timesteps=1000, cond_drop_prob=0.1)
-trainer = ImagenTrainer(imagen=imagen).cuda()
-trainer.load(ckpt)
-imgs = trainer.sample(texts=["dense residential area near the port"],
-                      cond_scale=5.0, return_pil_images=True)
-imgs[0].save("sample.png")
+cfg = load_preset("rsdiff1.5")
+trainer = load_cascade(cfg, download_release())
+generate(trainer.sample, ["dense residential area near the port ."], "generated", cond_scale=5.0)
 ```
+
+## Dataset
+
+RSICD (10,921 image–caption pairs) belongs at `data/RSICD_optimal/` as
+`RSICD_images/*.jpg` plus `dataset_rsicd.csv`. Build it from the Hugging Face mirror with
+`scripts/build_rsicd_csv.py`; see
+[`docs/reproducibility.md`](https://github.com/asebaq/rsdiff/blob/main/docs/reproducibility.md).
 
 ## Training
 
@@ -109,19 +104,24 @@ bash scripts/cloud/vast_run.sh destroy
 
 The script reads `VAST_API_KEY` from `.env`. Long runs go in a detached `tmux` session. See `bash scripts/cloud/vast_run.sh help` for the full subcommand list.
 
-A `diffusers`-native trainer under [`src/rsdiff/`](https://github.com/asebaq/rsdiff/tree/main/src/rsdiff) is in active development; until then, the cascade scripts above are the reference.
+Training is not part of the `rsdiff` package yet: it runs through the frozen reference implementation in [`ddpm/`](https://github.com/asebaq/rsdiff/tree/main/ddpm), which is removed once the packaged sampler reproduces the published metrics.
 
 ## Evaluation
 
-FID over the full RSICD test split (N=1,093) on the best SR milestone with `cond_scale=5`:
+Score a generated directory against the RSICD test split; both commands print JSON:
 
 ```bash
-bash scripts/eval/sr_final_1093.sh         # generate 1093-image bundle
-bash scripts/eval/fid_sweep.sh             # FID at feature=2048 + feature=768
-bash scripts/eval/sr_clip_score.sh         # CLIP score + shuffled-caption null
+rsdiff sample --rsicd data/RSICD_optimal --cond-scale 5 --seed 17 --out-dir final_test_cs5
+rsdiff eval fid final_test_cs5 --rsicd data/RSICD_optimal   # --feature 2048 --size 256
+rsdiff eval clip final_test_cs5                            # clip_score, clip_score_shuffled, delta
 ```
 
-Per-milestone FID sweeps and the CFG `cond_scale` ablation:
+FID is torchmetrics `FrechetInceptionDistance` (feature 2048, both sides resized to 256),
+the metric behind the published 65.70. CLIP-score uses OpenAI CLIP ViT-B/32 with a
+seed-17 shuffled-caption baseline. The historical cloud scripts (`scripts/eval/*.sh`)
+sampled with `ddpm/sample_grid.py`.
+
+Per-milestone FID sweeps and the CFG `cond_scale` ablation (historical cloud scripts):
 
 ```bash
 bash scripts/eval/sr_fid_sweep.sh          # SR ep150–1000 stride 50, N=128

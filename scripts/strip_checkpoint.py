@@ -21,6 +21,7 @@ Loading the stripped file:
 For sample_grid.py / ImagenTrainer.load(), keep the full ema dict shape;
 imagen-pytorch's ImagenTrainer.load expects 'model' + 'ema' keys.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -46,10 +47,15 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("input", type=pathlib.Path, help="Source checkpoint.pt")
     p.add_argument("output", type=pathlib.Path, help="Destination .pt")
-    p.add_argument("--keep", choices=KEEP_CHOICES, default="ema",
-                   help="Which weight stream to retain (default: ema).")
-    p.add_argument("--fp16", action="store_true",
-                   help="Cast float tensors to float16 for smaller file size.")
+    p.add_argument(
+        "--keep",
+        choices=KEEP_CHOICES,
+        default="ema",
+        help="Which weight stream to retain (default: ema).",
+    )
+    p.add_argument(
+        "--fp16", action="store_true", help="Cast float tensors to float16 for smaller file size."
+    )
     args = p.parse_args()
 
     if not args.input.is_file():
@@ -77,7 +83,7 @@ def main() -> None:
     dst_size = args.output.stat().st_size / 1e6
     print(f"in : {args.input}  ({src_size:.1f} MB)")
     print(f"out: {args.output}  ({dst_size:.1f} MB)  keep={args.keep} fp16={args.fp16}")
-    print(f"reduction: {src_size - dst_size:.1f} MB  ({(1 - dst_size/src_size)*100:.1f}%)")
+    print(f"reduction: {src_size - dst_size:.1f} MB  ({(1 - dst_size / src_size) * 100:.1f}%)")
     print(f"top-level keys: {list(out.keys())}")
 
 

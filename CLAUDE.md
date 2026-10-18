@@ -3,22 +3,25 @@
 ## Current state
 
 RSDiff has a published reference release. The canonical baseline is `rsdiff1.5`: a
-T5-conditioned Imagen-style 128→256 cascade with 119.9 M parameters. The released merged
-SR epoch-650 checkpoint reaches FID-2048 65.70 and CLIP-score 0.278 on the complete
-1,093-image RSICD test split at `cond_scale=5`.
+T5-conditioned Imagen-style 128→256 cascade with 119.9 M parameters (standalone UNets;
+132.2 M as loaded in the cascade, where the SR UNet gains low-res conditioning layers).
+The released merged SR epoch-650 checkpoint reaches FID-2048 65.70 and CLIP-score 0.278
+on the complete 1,093-image RSICD test split at `cond_scale=5`.
 
-The working sampler, trainer, and evaluation path is `ddpm/`. The `src/rsdiff/`
-diffusers-native package remains an incomplete scaffold: training and sampling raise
-`NotImplementedError`. Do not describe the scaffold as the released implementation and
-do not delete `ddpm/` until replacement metric parity is demonstrated.
+The installable package `src/rsdiff/` (published to PyPI as `rsdiff`) owns sampling and
+evaluation: `rsdiff sample` loads the released checkpoint through imagen-pytorch 2.1.0 and
+`rsdiff eval fid|clip` reproduces the published metrics. Training still lives in `ddpm/`,
+the frozen reference implementation. Do not delete `ddpm/` until the packaged sampler
+reproduces its metrics (PLAN B2); see `docs/reproducibility.md` for parity status.
 
 ## Canonical documents
 
 - `README.md`: public release overview and sampling quickstart.
 - `docs/reproducibility.md`: complete training and evaluation runbook.
 - `docs/REPORT.md`: methodology and published results.
-- `docs/PLAN.md`: active research and commercial-validation plan.
+- `docs/PLAN.md`: active research plan.
 - `docs/LICENSE_AUDIT.md`: commercial-rights inventory and blockers.
+- `CHANGELOG.md`: release notes; update with every user-visible change.
 
 Private historical research notes under `.notes/` are not authoritative when they
 conflict with tracked documentation.
@@ -26,21 +29,27 @@ conflict with tracked documentation.
 ## Conventions
 
 - Python 3.10+. Type hints required for public APIs.
-- Use `ruff` for lint; do not enable formatting implicitly.
-- Run `pytest -q` for smoke tests.
+- `uv sync` for the dev environment; `uv.lock` is committed and CI runs `uv sync --locked`.
+- CI enforces `uv run ruff check .`, `uv run ruff format --check .`, and `uv run pytest -q`.
 - Do not commit checkpoints, datasets, generated images, logs, or `outputs/`.
-- Preserve public metric protocol: RSICD test N=1,093, cascade 256², clean-FID
-  Inception feature 2048, `cond_scale=5`.
+- Preserve public metric protocol: RSICD test N=1,093, cascade 256², torchmetrics
+  `FrechetInceptionDistance` with Inception feature 2048 (`rsdiff.eval.fid`, not
+  clean-fid), `cond_scale=5`, real images from `scripts/build_rsicd_csv.py --split-csv`
+  (original RSICD JPEGs give FID 70.15, not 65.70); CLIP ViT-B/32 with the seed-17
+  shuffled-caption baseline.
 - Keep generated imagery clearly identified as synthetic; never present it as observed
-  or predicted geography.
-- Config fields belong in `src/rsdiff/training/config.py` before YAML use.
+  or predicted geography. `rsdiff.cascade.generate` writes this notice into every PNG.
+- Config fields belong in `src/rsdiff/config.py` before YAML use; presets live in
+  `src/rsdiff/configs/`.
 - Do not use customer imagery for training unless explicit rights and consent exist.
+- Releases: bump `rsdiff.__version__` (the single version source), add a CHANGELOG
+  entry, tag `vX.Y.Z`; `.github/workflows/publish.yml` publishes via PyPI trusted
+  publishing.
 
 ## Commercial work
 
-Do not start with a QGIS plugin. Follow `docs/PLAN.md`: validate demand, run manual
-pilots, and build application-neutral analysis behavior before adding a thin QGIS UI.
-RSDiff and commercial monitoring stay independent unless synthetic augmentation improves
+Commercial monitoring lives in the separate `geo-monitor-core` repository. RSDiff and
+commercial monitoring stay independent unless synthetic augmentation improves
 performance on an untouched real-data test set.
 
 ## Local context

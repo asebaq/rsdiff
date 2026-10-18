@@ -7,6 +7,7 @@ a checkpoint that trainer.load accepts for two-unet cascade sampling.
 
 Usage: python merge_base.py <slim_sr_ckpt> <base_ckpt> <out_ckpt>
 """
+
 import sys
 
 import torch

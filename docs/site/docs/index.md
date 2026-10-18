@@ -19,7 +19,14 @@ hide:
 
 A T5-conditioned cascaded diffusion model for text-to-satellite-image generation at 256×256, trained on RSICD. The released checkpoint reaches **FID 65.70** and **CLIP-score 0.278** on the full RSICD test split (N=1,093, `cond_scale=5`).
 
-The cascade is text-conditioned via a frozen T5-base encoder, classifier-free-guided at inference, and split across a 27 M-param 128² base UNet and a 92 M-param 256² super-resolution UNet (120 M total parameters, 1000-step DDPM). Pre-trained weights are released on the HuggingFace Hub at [`asebaq/rsdiff-sr-cascade-ep650`](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650).
+The cascade is text-conditioned via a frozen T5-base encoder, classifier-free-guided at inference, and split across a 27 M-param 128² base UNet and a 92 M-param 256² super-resolution UNet (119.9 M parameters across the two UNets, 1000-step DDPM). Pre-trained weights are released on the HuggingFace Hub at [`asebaq/rsdiff-sr-cascade-ep650`](https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650).
+
+```bash
+pip install rsdiff
+rsdiff sample --prompt "many buildings and green trees are around a playground ." -n 4
+```
+
+All generated imagery is synthetic: it is not an observation or a prediction of any real place.
 
 ## Headline
 
@@ -29,7 +36,7 @@ The cascade is text-conditioned via a frozen T5-base encoder, classifier-free-gu
 
 | Metric | Value |
 |---|---|
-| **FID** (cascade-256, N=1093, feature=2048) | **65.70** |
+| **FID** (torchmetrics Inception, feature=2048, 256, N=1093) | **65.70** |
 | **CLIP-score** (OpenAI ViT-B/32) | **0.278** ± 0.030 |
 | CLIP-score (shuffled-caption null) | 0.232 |
 | CLIP-score delta vs null | **+0.046** |
@@ -38,7 +45,7 @@ See [Results](results.md) for the full FID-vs-epoch sweep, CFG-scale ablation, a
 
 ## Samples
 
-Nine 256×256 samples from the RSICD test split, generated with the released cascade at `cond_scale=5`. Captions shown verbatim — no truncation.
+Nine synthetic 256×256 samples from the RSICD test split, generated with the released cascade at `cond_scale=5`. Captions shown verbatim — no truncation.
 
 <div class="sample-grid" markdown>
 

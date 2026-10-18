@@ -18,18 +18,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /workspace
 
-# Repo layout — package metadata, the rsdiff scaffold, the cascade implementation,
-# orchestration scripts, configs, and the standalone ddpm requirements pin.
-COPY pyproject.toml /workspace/pyproject.toml
-COPY README.md /workspace/README.md
-COPY LICENSE /workspace/LICENSE
+# Repo layout: package metadata, the rsdiff package (sampling + evaluation), the ddpm/
+# reference training code, orchestration scripts, and the ddpm requirements pin.
+COPY pyproject.toml README.md LICENSE NOTICE /workspace/
 COPY src/ /workspace/src/
 COPY ddpm/ /workspace/ddpm/
 COPY scripts/ /workspace/scripts/
-COPY configs/ /workspace/configs/
 
-# Install rsdiff (eval extras = clean-fid, transformers, torchmetrics[image])
-# plus the imagen-pytorch + extras pinned by ddpm/requirements_dgx.txt.
+# rsdiff[eval] pins imagen-pytorch 2.1.0 and adds torchmetrics[image] for FID;
+# ddpm/requirements_dgx.txt adds the training-only extras (tensorboard, opencv, ...).
 RUN pip install --upgrade pip && \
     pip install -e ".[eval]" && \
     pip install -r ddpm/requirements_dgx.txt

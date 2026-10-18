@@ -1,0 +1,23 @@
+RSDiff
+Copyright 2026 Ahmad Sebaq
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE). The license
+covers the code in this repository only.
+
+Third-party components used at runtime, not distributed with RSDiff:
+
+- imagen-pytorch (https://github.com/lucidrains/imagen-pytorch), MIT License. RSDiff's
+  cascade is built from its Unet, Imagen and ImagenTrainer classes.
+- T5-base text encoder and tokenizer (https://huggingface.co/google-t5/t5-base),
+  Apache License 2.0, downloaded from the Hugging Face Hub on first use.
+- OpenAI CLIP ViT-B/32 (https://huggingface.co/openai/clip-vit-base-patch32), MIT License,
+  used only for evaluation.
+
+The released checkpoint (https://huggingface.co/asebaq/rsdiff-sr-cascade-ep650) was
+trained on the RSICD dataset (Lu et al., "Exploring Models and Data for Remote Sensing
+Image Caption Generation", IEEE TGRS 2018). No RSICD images or captions are distributed
+with this package. RSICD's terms for commercial use have not been established; see
+docs/LICENSE_AUDIT.md before using the checkpoint or its outputs commercially.
+
+Images produced by RSDiff are synthetic. They are not observations or predictions of any
+real location.

@@ -1,6 +1,6 @@
 # Results
 
-All numbers in this page are scored on the official RSICD test split (1,093 images), with Inception feature=2048 for FID and OpenAI CLIP ViT-B/32 for CLIP-score.
+All numbers in this page are scored on the official RSICD test split (1,093 images), with torchmetrics Inception FID (feature=2048, both sides resized to 256) and OpenAI CLIP ViT-B/32 for CLIP-score.
 
 ## Headline
 

@@ -3,6 +3,7 @@
 
 Reads TSVs + JSON results, writes PNG figures to docs/figures/.
 """
+
 from __future__ import annotations
 
 import json
@@ -24,13 +25,15 @@ LR_TSV = VAST / "fid" / "fid_curve_full_lr_gdm.tsv"
 LOCAL_SR_TSV = REPO / "outputs" / "fid_curve_full_sr_gdm.tsv"
 FINAL_DIR = VAST / "ddpm/logs/full_sr_gdm/generated_images/final_test_step89050_cs5"
 
-plt.rcParams.update({
-    "figure.dpi": 110,
-    "savefig.dpi": 150,
-    "font.size": 10,
-    "axes.spines.top": False,
-    "axes.spines.right": False,
-})
+plt.rcParams.update(
+    {
+        "figure.dpi": 110,
+        "savefig.dpi": 150,
+        "font.size": 10,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+    }
+)
 
 
 def plot_sr_curve() -> None:
@@ -43,8 +46,14 @@ def plot_sr_curve() -> None:
 
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.plot(df.epoch, df.fid, "o-", color="#1f77b4", lw=1.6)
-    ax.scatter([winner.epoch], [winner.fid], color="#d62728", s=80, zorder=5,
-               label=f"winner ep{int(winner.epoch)}  FID {winner.fid:.2f}")
+    ax.scatter(
+        [winner.epoch],
+        [winner.fid],
+        color="#d62728",
+        s=80,
+        zorder=5,
+        label=f"winner ep{int(winner.epoch)}  FID {winner.fid:.2f}",
+    )
     ax.set_xlabel("SR epoch")
     ax.set_ylabel("FID  (cascade-256, N=128, feature=2048, cs=4)")
     ax.set_title("SR milestone FID sweep — RSICD test split")
@@ -62,8 +71,14 @@ def plot_cfg_curve() -> None:
 
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.plot(df.cond_scale, df.fid, "o-", color="#2ca02c", lw=1.6)
-    ax.scatter([winner.cond_scale], [winner.fid], color="#d62728", s=80, zorder=5,
-               label=f"winner cs={int(winner.cond_scale)}  FID {winner.fid:.2f}")
+    ax.scatter(
+        [winner.cond_scale],
+        [winner.fid],
+        color="#d62728",
+        s=80,
+        zorder=5,
+        label=f"winner cs={int(winner.cond_scale)}  FID {winner.fid:.2f}",
+    )
     ax.set_xlabel("CFG cond_scale")
     ax.set_ylabel("FID  (cascade-256, N=64)")
     ax.set_title(f"CFG sweep on ep{int(df.epoch.iloc[0])}  (step {int(df.step.iloc[0])})")
@@ -81,8 +96,14 @@ def plot_lr_curve() -> None:
 
     fig, ax = plt.subplots(figsize=(7, 4))
     ax.plot(df.epoch, df.fid, "o-", color="#9467bd", lw=1.6)
-    ax.scatter([winner.epoch], [winner.fid], color="#d62728", s=80, zorder=5,
-               label=f"SR seed: ep{int(winner.epoch)}  FID {winner.fid:.2f}")
+    ax.scatter(
+        [winner.epoch],
+        [winner.fid],
+        color="#d62728",
+        s=80,
+        zorder=5,
+        label=f"SR seed: ep{int(winner.epoch)}  FID {winner.fid:.2f}",
+    )
     ax.set_xlabel("LR base epoch")
     ax.set_ylabel("FID  (128, N=64, feature=2048, cs=4)")
     ax.set_title("LR base milestone FID sweep — RSICD test split")
@@ -102,23 +123,42 @@ def plot_headline() -> None:
 
     # FID side
     ax = axes[0]
-    bars = ax.bar(["thesis 2024", "rsdiff repro"], [66.49, fid["fid"]],
-                  color=["#9aa7b3", "#1f77b4"], width=0.55)
-    for b, v in zip(bars, [66.49, fid["fid"]]):
-        ax.text(b.get_x() + b.get_width() / 2, v + 0.5, f"{v:.2f}",
-                ha="center", va="bottom", fontsize=10)
+    bars = ax.bar(
+        ["thesis 2024", "rsdiff repro"],
+        [66.49, fid["fid"]],
+        color=["#9aa7b3", "#1f77b4"],
+        width=0.55,
+    )
+    for b, v in zip(bars, [66.49, fid["fid"]], strict=True):
+        ax.text(
+            b.get_x() + b.get_width() / 2,
+            v + 0.5,
+            f"{v:.2f}",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+        )
     ax.set_ylabel("FID (lower is better)")
     ax.set_title(f"FID parity — N={fid['n_gen']}, cascade-{fid['size']}, feature={fid['feature']}")
     ax.set_ylim(0, max(70, fid["fid"] + 10))
 
     # CLIP side
     ax = axes[1]
-    bars = ax.bar(["shuffled\nbaseline", "real captions"],
-                  [clip["clip_score_shuffled"], clip["clip_score"]],
-                  color=["#9aa7b3", "#2ca02c"], width=0.55)
-    for b, v in zip(bars, [clip["clip_score_shuffled"], clip["clip_score"]]):
-        ax.text(b.get_x() + b.get_width() / 2, v + 0.003, f"{v:.3f}",
-                ha="center", va="bottom", fontsize=10)
+    bars = ax.bar(
+        ["shuffled\nbaseline", "real captions"],
+        [clip["clip_score_shuffled"], clip["clip_score"]],
+        color=["#9aa7b3", "#2ca02c"],
+        width=0.55,
+    )
+    for b, v in zip(bars, [clip["clip_score_shuffled"], clip["clip_score"]], strict=True):
+        ax.text(
+            b.get_x() + b.get_width() / 2,
+            v + 0.003,
+            f"{v:.3f}",
+            ha="center",
+            va="bottom",
+            fontsize=10,
+        )
     ax.set_ylabel("CLIP cosine similarity")
     ax.set_title(f"CLIP-score — delta +{clip['delta']:.3f} ({clip['model'].split('/')[-1]})")
     ax.set_ylim(0, max(0.35, clip["clip_score"] + 0.05))
@@ -140,14 +180,15 @@ def plot_sample_montage(n: int = 9, seed: int = 11) -> None:
     rows = (n + cols - 1) // cols
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 3.2, rows * 3.6))
     axes = axes.ravel() if rows * cols > 1 else [axes]
-    for ax, idx in zip(axes, idxs):
+    for ax, idx in zip(axes, idxs, strict=False):  # grid may have spare axes
         ax.imshow(Image.open(pngs[idx]))
-        ax.set_xticks([]); ax.set_yticks([])
+        ax.set_xticks([])
+        ax.set_yticks([])
         cap = captions[idx]
         if len(cap) > 60:
             cap = cap[:57] + "..."
         ax.set_title(cap, fontsize=8)
-    for ax in axes[len(idxs):]:
+    for ax in axes[len(idxs) :]:
         ax.axis("off")
     fig.suptitle("ep650 × cs=5 — 9 random samples (RSICD test captions)")
     fig.tight_layout()

@@ -29,11 +29,8 @@ _IMG_EXTS = {".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"}
 
 
 def _auto_device() -> str:
-    if torch.cuda.is_available():
-        return "cuda"
-    if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
-        return "mps"
-    return "cpu"
+    # Not MPS: torchmetrics keeps FID statistics in float64, which MPS does not support.
+    return "cuda" if torch.cuda.is_available() else "cpu"
 
 
 @dataclass

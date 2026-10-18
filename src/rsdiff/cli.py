@@ -1,107 +1,135 @@
-"""rsdiff CLI entry point."""
+"""``rsdiff`` command line: sample the released cascade and score generation bundles."""
 
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from dataclasses import asdict
 from pathlib import Path
 
-
-def _add_common(p: argparse.ArgumentParser) -> None:
-    p.add_argument("--config", "-c", type=Path, required=True, help="YAML config path")
-
-
-def cmd_train(args: argparse.Namespace) -> int:
-    from rsdiff.training.config import load_config
-    from rsdiff.training.trainer import train
-
-    cfg = load_config(args.config)
-    train(cfg)
-    return 0
+from rsdiff import __version__
+from rsdiff.config import DEFAULT_PRESET, PRESETS
 
 
 def cmd_sample(args: argparse.Namespace) -> int:
-    from rsdiff.training.config import load_config
-    from rsdiff.training.trainer import sample
+    from rsdiff.cascade import download_release, generate, load_cascade, seed_everything
+    from rsdiff.config import resolve_config
+    from rsdiff.datasets.rsicd import sample_captions
 
-    cfg = load_config(args.config)
-    sample(cfg, prompt=args.prompt, n=args.n, out_dir=args.out_dir)
+    if args.prompt:
+        captions = args.prompt * (args.n or 1)
+    else:
+        captions = sample_captions(args.rsicd, split=args.split, n=args.n, seed=args.seed)
+    cfg = resolve_config(args.config)
+
+    if args.checkpoint is None:
+        if args.config != DEFAULT_PRESET:
+            sys.exit("--checkpoint is required unless --config is the released rsdiff1.5")
+        print("fetching released checkpoint (1.9 GB on first use)", file=sys.stderr)
+        checkpoint = download_release()
+    else:
+        checkpoint = args.checkpoint
+
+    seed_everything(args.seed)
+    trainer = load_cascade(cfg, checkpoint, cpu=args.cpu)
+    print(f"sampling {len(captions)} image(s) on {trainer.device}", file=sys.stderr)
+    paths = generate(
+        trainer.sample,
+        captions,
+        args.out_dir,
+        cond_scale=args.cond_scale,
+        batch_size=args.batch_size,
+        stop_at_unet=1 if args.lr_only else None,
+        on_batch=lambda done, total: print(f"  {done}/{total}", file=sys.stderr),
+    )
+    print(f"wrote {len(paths)} PNGs to {args.out_dir}", file=sys.stderr)
     return 0
 
 
-def cmd_eval(args: argparse.Namespace) -> int:
-    from rsdiff.eval import zeroshot_oa
-    from rsdiff.training.config import load_config
+def cmd_eval_fid(args: argparse.Namespace) -> int:
+    from rsdiff.eval.fid import fid
 
-    cfg = load_config(args.config)
-    csv = Path(cfg.data.root) / "dataset_rsicd.csv"
-    images_dir = args.images_dir or (Path(cfg.data.root) / "RSICD_images")
+    res = fid(
+        gen_dir=args.gen_dir,
+        real_csv=args.rsicd / "dataset_rsicd.csv",
+        real_dir=args.rsicd / "RSICD_images",
+        split=args.split,
+        feature=args.feature,
+        image_size=args.size,
+        max_n=args.max_n,
+    )
+    print(json.dumps(asdict(res), indent=2))
+    return 0
 
-    if "zeroshot_oa" in args.metric:
-        res = zeroshot_oa(csv, images_dir)
-        print(f"zeroshot_oa: {res.accuracy:.2f}%  ({res.correct}/{res.total}, missing={res.missing})")
-    if "fid" in args.metric:
-        from rsdiff.eval import fid as fid_metric
 
-        res = fid_metric(
-            gen_dir=images_dir,
-            real_csv=csv,
-            real_dir=Path(cfg.data.root) / "RSICD_images",
-            split="test",
-            feature=args.fid_feature,
-            image_size=args.fid_size,
-            max_n=args.max_n,
-        )
-        print(
-            f"fid (feature={res.feature}, size={res.image_size}): {res.fid:.2f}"
-            f"  (real={res.n_real}, gen={res.n_gen})"
-        )
-    if "clip_score" in args.metric:
-        print("clip_score not implemented yet — pending v0 scope lock.")
+def cmd_eval_clip(args: argparse.Namespace) -> int:
+    from rsdiff.eval.clip import clip_score
+
+    print(json.dumps(asdict(clip_score(args.gen_dir, model_id=args.model)), indent=2))
     return 0
 
 
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="rsdiff", description="Diffusion models for remote sensing.")
+    p = argparse.ArgumentParser(
+        prog="rsdiff", description="Text-to-satellite-image diffusion (RSDiff)."
+    )
+    p.add_argument("--version", action="version", version=f"rsdiff {__version__}")
     sub = p.add_subparsers(dest="command", required=True)
 
-    p_train = sub.add_parser("train", help="Train a model from a config.")
-    _add_common(p_train)
-    p_train.set_defaults(fn=cmd_train)
-
-    p_sample = sub.add_parser("sample", help="Sample images from a trained checkpoint.")
-    _add_common(p_sample)
-    p_sample.add_argument("--prompt", type=str, required=True)
-    p_sample.add_argument("-n", type=int, default=1)
-    p_sample.add_argument("--out-dir", type=Path, default=Path("generated"))
-    p_sample.set_defaults(fn=cmd_sample)
-
-    p_eval = sub.add_parser("eval", help="Run evaluation metrics on a set of images.")
-    _add_common(p_eval)
-    p_eval.add_argument("--images-dir", type=Path, default=None)
-    p_eval.add_argument(
-        "--metric",
-        nargs="+",
-        choices=["fid", "clip_score", "zeroshot_oa"],
-        default=["zeroshot_oa"],
+    s = sub.add_parser(
+        "sample",
+        help="Generate images from text with the cascade.",
+        description="Generate synthetic 256x256 images. Downloads the released "
+        "rsdiff1.5 checkpoint unless --checkpoint is given.",
     )
-    p_eval.add_argument(
-        "--fid-feature",
+    src = s.add_mutually_exclusive_group(required=True)
+    src.add_argument("--prompt", action="append", help="Caption to render (repeatable).")
+    src.add_argument("--rsicd", type=Path, help="RSICD root; sample captions from its CSV instead.")
+    s.add_argument("--split", default="test", help="RSICD split for --rsicd (default: test).")
+    s.add_argument(
+        "-n",
         type=int,
-        choices=[64, 192, 768, 2048],
-        default=2048,
-        help="InceptionV3 feature dim. 2048=standard/paper-comparable, 64=thesis snippet.",
+        default=None,
+        help="Images per --prompt (default 1), or captions drawn from --rsicd (default: all).",
     )
-    p_eval.add_argument("--fid-size", type=int, default=256, help="Resize both sides to this before FID (128=LR, 256=SR/cascade).")
-    p_eval.add_argument("--max-n", type=int, default=None, help="Cap images per side (debug).")
-    p_eval.set_defaults(fn=cmd_eval)
+    s.add_argument("--out-dir", type=Path, default=Path("generated"))
+    s.add_argument(
+        "--config",
+        default=DEFAULT_PRESET,
+        help=f"Preset ({', '.join(PRESETS)}) or YAML path (default: {DEFAULT_PRESET}).",
+    )
+    s.add_argument("--checkpoint", type=Path, help="ImagenTrainer checkpoint to load.")
+    s.add_argument("--cond-scale", type=float, default=5.0, help="CFG scale (default: 5).")
+    s.add_argument("--seed", type=int, default=17)
+    s.add_argument("--batch-size", type=int, default=2)
+    s.add_argument("--lr-only", action="store_true", help="Stop at the 128x128 base UNet.")
+    s.add_argument("--cpu", action="store_true", help="Force CPU even if a GPU is available.")
+    s.set_defaults(fn=cmd_sample)
 
+    e = sub.add_parser("eval", help="Score a generation bundle.")
+    esub = e.add_subparsers(dest="metric", required=True)
+
+    f = esub.add_parser("fid", help="FID against the real RSICD split.")
+    f.add_argument("gen_dir", type=Path, help="Directory of generated PNGs.")
+    f.add_argument("--rsicd", type=Path, required=True, help="RSICD root (CSV + RSICD_images).")
+    f.add_argument("--split", default="test")
+    f.add_argument("--feature", type=int, choices=[64, 192, 768, 2048], default=2048)
+    f.add_argument("--size", type=int, default=256, help="Resize both sides to this first.")
+    f.add_argument("--max-n", type=int, default=None, help="Cap images per side (debug only).")
+    f.set_defaults(fn=cmd_eval_fid)
+
+    c = esub.add_parser("clip", help="CLIP score with a shuffled-caption baseline.")
+    c.add_argument("gen_dir", type=Path, help="Bundle written by `rsdiff sample`.")
+    c.add_argument(
+        "--model", default="openai/clip-vit-base-patch32", help="Hugging Face CLIP model id."
+    )
+    c.set_defaults(fn=cmd_eval_clip)
     return p
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = build_parser()
-    args = parser.parse_args(argv)
+    args = build_parser().parse_args(argv)
     return args.fn(args)
 
 

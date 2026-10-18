@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 260" width="1000" height="260" role="img" aria-label="rsdiff">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#1D4ED8"/>
+    </linearGradient>
+  </defs>
+  <rect x="40" y="30" width="200" height="200" rx="44" fill="url(#g)"/>
+  <g transform="translate(40 30)">
+    <rect x="40" y="40" width="56" height="56" rx="8" fill="#FFFFFF" fill-opacity="0.18"/>
+    <rect x="104" y="40" width="56" height="56" rx="8" fill="#FFFFFF" fill-opacity="0.38"/>
+    <rect x="40" y="104" width="56" height="56" rx="8" fill="#FFFFFF" fill-opacity="0.62"/>
+    <rect x="104" y="104" width="56" height="56" rx="8" fill="#FFFFFF"/>
+    <circle cx="68" cy="68" r="5" fill="#FFFFFF"/>
+    <circle cx="132" cy="62" r="4" fill="#FFFFFF"/>
+    <circle cx="140" cy="78" r="3" fill="#FFFFFF"/>
+    <path d="M118 122 L146 122 L146 150 L118 150 Z" fill="#22C55E"/>
+    <path d="M110 140 Q130 112 154 132" fill="none" stroke="#1D4ED8" stroke-width="5" stroke-linecap="round"/>
+  </g>
+  <text x="290" y="150" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="112" font-weight="700" letter-spacing="-2" fill="#F8FAFC">rsdiff</text>
+  <text x="294" y="210" font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="30" font-weight="500" fill="#CBD5E1">text-to-satellite-image diffusion <tspan fill="#38BDF8">(synthetic imagery)</tspan></text>
+</svg>

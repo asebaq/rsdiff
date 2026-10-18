@@ -14,6 +14,7 @@ Split-count delta vs local CSV: HF mirror has train/test/valid = 8730/1090/1090
 while the local thesis CSV has 8734/1093/1094 (same 10921 images, ~11 rows
 reshuffled across splits). Set --split-csv to override splits from a local CSV.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,8 +56,12 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--out", type=pathlib.Path, default=pathlib.Path("data/RSICD_optimal"))
     p.add_argument("--repo", default="arampacha/rsicd")
-    p.add_argument("--split-csv", type=pathlib.Path, default=None,
-                   help="Optional local CSV; overrides HF splits using its filename->split map.")
+    p.add_argument(
+        "--split-csv",
+        type=pathlib.Path,
+        default=None,
+        help="Optional local CSV; overrides HF splits using its filename->split map.",
+    )
     p.add_argument("--quality", type=int, default=95, help="JPEG quality for re-encoded images.")
     args = p.parse_args()
 
@@ -84,17 +89,19 @@ def main() -> None:
             img.convert("RGB").save(img_dir / fname, format="JPEG", quality=args.quality)
 
             row_split = split_override.get(fname, split_local) if split_override else split_local
-            rows.append({
-                "filename": fname,
-                "split": row_split,
-                "imgid": imgid,
-                "sent1": captions[0],
-                "sent2": captions[1],
-                "sent3": captions[2],
-                "sent4": captions[3],
-                "sent5": captions[4],
-                "label": label_from_filename(fname),
-            })
+            rows.append(
+                {
+                    "filename": fname,
+                    "split": row_split,
+                    "imgid": imgid,
+                    "sent1": captions[0],
+                    "sent2": captions[1],
+                    "sent3": captions[2],
+                    "sent4": captions[3],
+                    "sent5": captions[4],
+                    "label": label_from_filename(fname),
+                }
+            )
             imgid += 1
 
     with csv_path.open("w", newline="") as f:

@@ -8,13 +8,16 @@ Imagen-style cascade — a 27 M-param 128-pixel base UNet and a 92 M-param
 super-resolution UNet to 256² — conditioned on a frozen T5-base text
 encoder with classifier-free guidance. Trained on RSICD, the released
 checkpoint (`rsdiff-sr-cascade-ep650`) reaches **FID 65.70** on the full
-RSICD test split (N=1093, Inception feature=2048, cascade-256,
+RSICD test split (N=1093, torchmetrics Inception FID, feature=2048, both
+sides resized to 256,
 `cond_scale=5`). Text-image alignment, measured with OpenAI CLIP
 ViT-B/32, scores **0.278** — a +0.046 lift over a shuffled-caption null
 baseline. Beyond the headline we publish the full FID-vs-epoch trajectory
 (ep50→1000), the CFG-scale ablation (cs=1→8), the merged checkpoint, and
 the entire 1093-image generation bundle. Code, weights, and the
-end-to-end reproducibility runbook are MIT/Apache-2.0 licensed.
+end-to-end reproducibility runbook are public. The code is Apache-2.0;
+the weights are not commercially cleared because RSICD's terms are
+unresolved (see [`LICENSE_AUDIT.md`](LICENSE_AUDIT.md)).
 
 The work follows directly from *RSDiff: remote sensing image generation
 from text using diffusion model* (Sebaq & ElHelw, NCA 2024), and the
@@ -45,6 +48,11 @@ between stages.
 | --- | --- | --- | --- | --- |
 | LR base UNet | 27.18 M | text + noise | 128² image | T5-base, `p_uncond=0.1` |
 | SR UNet | 92.66 M | text + LR + noise | 256² image | T5-base + LR image, `p_uncond=0.1` |
+
+Together the two standalone UNets total 119.9 M parameters, the figure
+used throughout this report. Loaded inside the cascade, the SR UNet gains
+low-resolution conditioning layers (105.0 M), so the cascade holds
+132.2 M trainable parameters, plus the frozen T5-base text encoder.
 
 Sampler: DDPM, T = 1000 denoising steps. Classifier-free guidance applies
 to both stages with a shared `cond_scale`; null-conditioning is taken
@@ -195,11 +203,11 @@ unets at the end of training is left as future work.
 
 ## 6. Future work
 
-In rough dependency order, from [`roadmap.md`](roadmap.md):
+In rough dependency order; the active plan is [`PLAN.md`](PLAN.md):
 
-1. **v0 trainer** — replace `ddpm/*` with a `diffusers`-native
-   trainer that reads `configs/rsicd_text_128.yaml`. Acceptance bar:
-   parity with this release's 65.70.
+1. **Packaged-sampler parity** — regenerate the 1,093-image bundle with
+   `rsdiff sample` and score it with `rsdiff eval`; on parity with this
+   release's 65.70 / 0.278, delete `ddpm/`.
 2. **v0 overfit fixes** — weight decay, caption augmentation,
    val-FID, early stop, pHash memorisation probe.
 3. **CLIP-score per-class** breakdown across RSICD's land-cover classes;
@@ -207,8 +215,7 @@ In rough dependency order, from [`roadmap.md`](roadmap.md):
 4. **v0.x** — T5-base → flan-t5-xl encoder upgrade; random-of-5 caption
    sampling + VLM dense re-captioning; Min-SNR loss weighting (γ=5).
 5. **v1** — pixel cascade → latent diffusion (LDM) port.
-6. **v2** — multispectral conditioning (Sentinel-2; see
-   [`v3_multispectral_lit.md`](v3_multispectral_lit.md)).
+6. **v2** — multispectral conditioning (Sentinel-2).
 
 ## 7. Release artefacts
 
@@ -219,6 +226,7 @@ In rough dependency order, from [`roadmap.md`](roadmap.md):
 | 1093 generation bundle | same HF model repo (`samples/` + `captions.txt`) |
 | Committed numerics (TSVs, JSONs) | [`../results/`](../results/) |
 | Reproducibility runbook | [`reproducibility.md`](reproducibility.md) |
+| Model card | [`model_card.md`](model_card.md) |
 
 ## 8. References
 
