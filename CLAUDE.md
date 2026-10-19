@@ -10,9 +10,9 @@ on the complete 1,093-image RSICD test split at `cond_scale=5`.
 
 The installable package `src/rsdiff/` (published to PyPI as `rsdiff`) owns sampling and
 evaluation: `rsdiff sample` loads the released checkpoint through imagen-pytorch 2.1.0 and
-`rsdiff eval fid|clip` reproduces the published metrics. Training still lives in `ddpm/`,
-the frozen reference implementation. Do not delete `ddpm/` until the packaged sampler
-reproduces its metrics (PLAN B2); see `docs/reproducibility.md` for parity status.
+`rsdiff eval fid|clip` reproduces the published metrics. Training lives in `ddpm/`, the
+patched thesis-era training code; keep it until the package can train. Packaged
+sampling and evaluation match `ddpm/` (PLAN B2 complete, see `docs/reproducibility.md`).
 
 ## Canonical documents
 

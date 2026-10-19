@@ -1,11 +1,11 @@
 # ddpm/
 
-Frozen reference implementation of the RSDiff cascade: the patched thesis-era
-`imagen-pytorch` training code that produced the released checkpoint. It is kept only
-for training and for comparison with the packaged `rsdiff` sampler. Do not extend it.
+Training implementation of the RSDiff cascade: the patched thesis-era `imagen-pytorch`
+code that produced the released checkpoint. The installable `rsdiff` package covers
+sampling and evaluation; training lives here until the package gains it.
 
-It will be removed once `rsdiff sample` + `rsdiff eval` reproduce the published FID and
-CLIP-score from a fresh 1,093-image bundle (see the reproduction status in
+`rsdiff sample` reproduces `sample_grid.py` pixel for pixel, so new sampling and scoring
+work belongs in the package (see the reproduction status in
 [`docs/reproducibility.md`](../docs/reproducibility.md#reproduction-status)).
 
 ```

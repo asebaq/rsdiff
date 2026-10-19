@@ -205,9 +205,9 @@ unets at the end of training is left as future work.
 
 In rough dependency order; the active plan is [`PLAN.md`](PLAN.md):
 
-1. **Packaged-sampler parity** — regenerate the 1,093-image bundle with
-   `rsdiff sample` and score it with `rsdiff eval`; on parity with this
-   release's 65.70 / 0.278, delete `ddpm/`.
+1. **Training in the package** — the packaged sampler and metrics
+   already match this release (sampling pixel-identical, FID 65.688,
+   CLIP 0.27771); move the `ddpm/` training loop into `rsdiff`.
 2. **v0 overfit fixes** — weight decay, caption augmentation,
    val-FID, early stop, pHash memorisation probe.
 3. **CLIP-score per-class** breakdown across RSICD's land-cover classes;

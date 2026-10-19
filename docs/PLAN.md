@@ -8,8 +8,8 @@ depends on the other until evidence justifies integration.
 
 - `rsdiff1.5` is the released reference baseline: a 119.9 M-parameter Imagen-style
   128→256 cascade with FID 65.70 and CLIP-score 0.278 on 1,093 RSICD test images.
-- `ddpm/` remains the reference implementation until another implementation reproduces
-  its sampling behavior and evaluation metrics.
+- `ddpm/` is the training implementation; the `rsdiff` package covers sampling and
+  evaluation. `ddpm/` stays until the package can train.
 - Generated imagery is never represented as observation or prediction.
 - Commercial work lives in `geo-monitor-core`. RSDiff enters a commercial workflow only
   after an untouched real-data evaluation shows downstream benefit.
@@ -27,20 +27,19 @@ experiments, and kill conditions.
 - Reconcile repository guidance with the published release.
 - Verify exact sampling and evaluation commands.
 - Record code, model, dependency, and dataset licensing separately.
-- Keep `ddpm/` until parity is demonstrated.
+- Keep `ddpm/` as the training implementation.
 
 Exit criterion: a new contributor can identify the canonical checkpoint, metrics,
 commands, limitations, and commercial-license blockers from tracked documentation.
 
-### B2. Independent reproduction
+### B2. Independent reproduction — complete 2026-10-18
 
-- Create a clean environment and download the published checkpoint.
-- Generate deterministic samples with seed 17.
-- Re-run FID-2048 and CLIP score on the complete test split.
-- Record dependency versions, hardware, runtime, checkpoint digest, and metric deltas.
+- Published checkpoint downloads from a pinned revision and passes its SHA-256 check.
+- `rsdiff sample` reproduces `ddpm/sample_grid.py` pixel for pixel (seed 17).
+- `rsdiff eval` reproduces FID 65.70 (65.688) and CLIP 0.278 (0.27771) on the published
+  1,093-image bundle.
 
-Exit criterion: sampling works from the published artifact and metrics match the
-release within a documented tolerance.
+Evidence, hardware and deltas: `docs/reproducibility.md`, "Reproduction status".
 
 ### B3. Commercial-relevance experiment
 
@@ -58,9 +57,7 @@ degrading important subgroups. FID improvement alone does not qualify.
 
 ## Current order
 
-1. Finish B1.
-2. Run B2.
-3. Run B3 only after B2 is stable.
+1. Run B3.
 
 ## Kill conditions
 

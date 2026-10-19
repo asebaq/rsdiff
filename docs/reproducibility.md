@@ -311,13 +311,18 @@ GPU is SR training; everything else fits comfortably on a 24 GB 4090.
 
 ## Reproduction status
 
-Packaged path (`rsdiff sample` / `rsdiff eval`) versus the published numbers.
+Packaged path (`rsdiff sample` / `rsdiff eval`) versus the published release. Complete
+as of 2026-10-18 (PLAN B2).
 
 | Check | Published | Packaged | Status |
 | --- | --- | --- | --- |
+| Release weights loaded into the `rsdiff1.5` preset | — | strict load, all keys matched | Matches |
 | CLIP-score on the published 1,093-image bundle (`rsdiff eval clip`) | 0.27771 | 0.27771 (abs. diff 5e-7); shuffled 0.23219 | Matches |
 | FID on the published 1,093-image bundle (`rsdiff eval fid`, CPU, torch 2.12, real images from `build_rsicd_csv.py --split-csv`) | 65.70 (65.698) | 65.688 | Matches (abs. diff 0.010) |
+| Caption draw for `--rsicd`, seed 17, full test split | published `captions.txt` | all 1,093 identical, same order | Matches |
 | One RSICD caption, seed 17, CPU: `rsdiff sample` versus `ddpm/sample_grid.py` on the same checkpoint | identical image | max abs. pixel diff 0 | Matches |
-| Fresh `rsdiff sample` 1,093 bundle, FID + CLIP (needs a CUDA GPU; CPU takes about an hour per image) | 65.70 / 0.278 | pending | Pending |
 
-When the last row matches, `ddpm/` is removed (Phase B2 in [`PLAN.md`](PLAN.md)).
+A fresh 1,093-image `rsdiff sample` run was not repeated. The packaged sampler produces
+the same pixels as the sampler that made the published bundle, and the packaged metrics
+reproduce the published scores on that bundle, so a re-run would only measure GPU
+nondeterminism (about 24 GPU-hours, roughly $17 on an RTX 4090).

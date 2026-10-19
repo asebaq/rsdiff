@@ -85,8 +85,8 @@ target-version = "py310"
 select = ["E", "F", "I", "W", "B", "UP"]
 
 [tool.ruff.lint.per-file-ignores]
-# Frozen reference implementation (sys.path imports, original training loops); it is
-# deleted once the packaged sampler reproduces its metrics, so it is not refactored.
+# Thesis-era training code (sys.path imports, original training loops); kept as-is
+# rather than refactored until training moves into the package.
 "ddpm/**" = ["E402", "E501", "B007", "B905"]
 
 [tool.pytest.ini_options]

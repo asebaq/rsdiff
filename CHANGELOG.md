@@ -20,7 +20,7 @@ instead of raising `NotImplementedError`.
   torchmetrics' FID need float64.
 - Removed the unused `diffusers` scaffold (`rsdiff train`, `rsdiff.models`,
   `rsdiff.pipelines`, `rsdiff.conditioning`, `zeroshot_oa`) and its dependencies.
-  Training remains in `ddpm/` until the packaged sampler's metrics match it.
+  Training remains in `ddpm/`.
 - Corrected the documented metric protocol: the headline FID uses torchmetrics'
   `FrechetInceptionDistance` (feature 2048), not clean-fid.
 - The commercial monitoring experiments moved to a separate repository.

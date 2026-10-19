@@ -161,7 +161,7 @@ released).
 
 ## Training
 
-Training still runs through the frozen reference implementation in [`ddpm/`](ddpm/):
+Training runs through the original training code in [`ddpm/`](ddpm/):
 
 ```bash
 bash ddpm/scripts/run_training_local.sh   # stage 1: 128x128 base UNet
@@ -174,10 +174,10 @@ scoring.
 
 ## Roadmap
 
-1. **Reproduce with the package.** Regenerate the 1,093-image bundle with `rsdiff sample`
-   and match the published FID and CLIP-score; then delete `ddpm/`.
-2. **Commercial relevance.** Test whether synthetic augmentation improves a downstream
+1. **Commercial relevance.** Test whether synthetic augmentation improves a downstream
    model on an untouched real-data test set.
+2. **Training in the package.** Move the two-stage training loop out of `ddpm/` into
+   `rsdiff`.
 
 Details and acceptance criteria: [`docs/PLAN.md`](docs/PLAN.md).
 

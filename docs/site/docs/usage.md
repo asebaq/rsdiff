@@ -104,7 +104,7 @@ bash scripts/cloud/vast_run.sh destroy
 
 The script reads `VAST_API_KEY` from `.env`. Long runs go in a detached `tmux` session. See `bash scripts/cloud/vast_run.sh help` for the full subcommand list.
 
-Training is not part of the `rsdiff` package yet: it runs through the frozen reference implementation in [`ddpm/`](https://github.com/asebaq/rsdiff/tree/main/ddpm), which is removed once the packaged sampler reproduces the published metrics.
+Training is not part of the `rsdiff` package yet: it runs through the thesis-era training code in [`ddpm/`](https://github.com/asebaq/rsdiff/tree/main/ddpm).
 
 ## Evaluation
 
